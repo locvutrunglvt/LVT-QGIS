@@ -1,0 +1,24 @@
+[general]
+name=LVT
+qgisMinimumVersion=3.28
+description=GIS toolkit for forestry, land management, and EUDR compliance.
+version=1.0.0
+author=Lộc Vũ Trung (LVT) / Slow Forest
+email=support@slowforest.org
+
+about=A comprehensive QGIS plugin suite providing map layout, KML conversion, MBTiles generation, EUDR GeoJSON export, thematic mapping, basemap loading, Vietnamese font conversion, VN-2000 CRS tools, and project packaging. Built from cartographic science and international standards.
+
+tracker=https://github.com/slowforest/lvt-plugin/issues
+repository=https://github.com/slowforest/lvt-plugin
+homepage=https://github.com/slowforest/lvt-plugin
+
+tags=vietnam,forestry,layout,kml,eudr,geojson,mbtiles,crs,vn2000,basemap,font
+
+category=Vector
+icon=icon.png
+
+experimental=True
+deprecated=False
+
+changelog=
+    1.0.0 - Initial release: Umbrella plugin with menu framework
