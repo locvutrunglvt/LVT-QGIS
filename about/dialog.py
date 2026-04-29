@@ -70,14 +70,41 @@ class AboutDialog(QDialog):
         desc.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(desc)
 
+        # --- Author Profile ---
+        author_html = """
+        <div style='font-family:Arial;text-align:center;color:#333'>
+        <div style='background:#f4f4f4;padding:20px;border-radius:10px'>
+        <h1 style='color:#1B5E20;margin-bottom:5px;'>Lộc Vũ Trung</h1>
+        <p style='font-size:14px;font-weight:bold;color:#444;margin-top:0;'>
+        Chuyên gia FSC, Kỹ thuật lâm sinh, và Chuyển đổi số</p>
+        <hr style='border:0;height:1px;background:#ddd;width:80%'>
+        <div style='text-align:left;display:inline-block;width:80%;
+        font-size:13px;line-height:1.8;margin-top:10px'>
+        <b>📱 Zalo:</b> 0913 191 178<br>
+        <b>🌐 Website:</b> locvutrung.lvtcenter.it.com<br>
+        <b>🎬 YouTube:</b> youtube.com/@locvutrung<br>
+        </div>
+        <div style='margin-top:15px;background:#fff;padding:12px;
+        border-radius:5px;border-left:5px solid #1B5E20;text-align:left;
+        font-size:13px;line-height:1.8;box-shadow:0 2px 4px rgba(0,0,0,0.1)'>
+        <b>Phạm vi chuyên môn:</b><br>
+        • Hệ thống chứng chỉ rừng FSC/CoC<br>
+        • Quy định chống phá rừng châu Âu (EUDR)<br>
+        • Ứng dụng Webapp / Appsheet<br>
+        • Hệ thống thông tin địa lý QGIS / Quản lý DATA<br>
+        • Kỹ thuật Lâm sinh
+        </div></div></div>
+        """
+        author_label = QLabel(author_html)
+        author_label.setWordWrap(True)
+        author_label.setTextFormat(Qt.RichText)
+        author_label.setOpenExternalLinks(True)
+        main_layout.addWidget(author_label)
+
         # --- Info group ---
         info_group = QGroupBox()
         info_layout = QFormLayout(info_group)
 
-        info_layout.addRow(
-            QLabel(f"<b>{tr('Author')}:</b>"),
-            QLabel(self._author),
-        )
         info_layout.addRow(
             QLabel(f"<b>{tr('Version')}:</b>"),
             QLabel(self._version),

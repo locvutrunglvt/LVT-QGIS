@@ -196,15 +196,43 @@ class LvtPlugin:
 
     def _open_layout(self):
         """Open the Map Layout dialog."""
-        self._show_placeholder("Map Layout")
+        from .layout.dialog import LvtDialog
+
+        if "layout" not in self._dialogs:
+            layout_dir = os.path.join(self.plugin_dir, "layout")
+            self._dialogs["layout"] = LvtDialog(self.iface, layout_dir)
+
+        dlg = self._dialogs["layout"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_kml_export(self):
-        """Open the SHP to KML/KMZ dialog."""
-        self._show_placeholder("SHP → KML/KMZ")
+        """Open the KML dialog (SHP to KML/KMZ tab)."""
+        self._ensure_kml_dialog()
+        dlg = self._dialogs["kml"]
+        dlg.tabs.setCurrentIndex(0)  # SHP → KML tab
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_kml_import(self):
-        """Open the KML/KMZ to SHP dialog."""
-        self._show_placeholder("KML/KMZ → SHP")
+        """Open the KML dialog (KML/KMZ to SHP tab)."""
+        self._ensure_kml_dialog()
+        dlg = self._dialogs["kml"]
+        dlg.tabs.setCurrentIndex(1)  # KML → SHP tab
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def _ensure_kml_dialog(self):
+        """Lazy-create the KML dialog instance."""
+        if "kml" not in self._dialogs:
+            from .kml.dialog import LvtKmlViewDialog
+            self._dialogs["kml"] = LvtKmlViewDialog(
+                self.iface, self.iface.mainWindow()
+            )
 
     def _open_mbtiles(self):
         """Open the MBTiles creator dialog."""
