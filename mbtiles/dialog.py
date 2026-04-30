@@ -649,34 +649,71 @@ class MBTilesDialog(QDialog):
         p.setPen(pen)
         p.drawRect(px, py, poly_w, poly_h)
 
-        # Draw label text on top
+        # ---- Build label lines exactly like QGIS expression ----
         font = QFont(self.cbo_font.currentFont())
         font.setPointSize(sz)
         font.setBold(is_bold)
         p.setFont(font)
-        p.setPen(QPen(self._font_color))
 
         fm = p.fontMetrics()
-        line_gap = int(fm.height() * lh)
+        base_h = fm.height()
+        line_gap = int(base_h * lh)  # line height percentage
 
         if den_t:
             uline = "_" * self.spn_uline.value()
             n_spacing = self.spn_spacing.value()
-            # Build lines exactly like QGIS expression:
-            # numerator \n underline \n \n \n \n \n denominator
+            # Build lines: numerator, underline, N empty lines, denominator
             lines = [num_t, uline] + [""] * n_spacing + [den_t]
         else:
             lines = [num_t]
 
+        # Calculate total block height (every line gets line_gap, including empty)
         total_h = line_gap * len(lines)
         start_y = (ph - total_h) // 2 + fm.ascent()
 
+        # Measure max text width for background
+        max_tw = 0
+        for line in lines:
+            if line:
+                tw = fm.horizontalAdvance(line)
+                if tw > max_tw:
+                    max_tw = tw
+
+        cx = pw // 2  # center x
+
+        # ---- Draw label background (if enabled) ----
+        if self.chk_bg.isChecked():
+            bg_pad = 4
+            bg_x = cx - max_tw // 2 - bg_pad
+            bg_y = start_y - fm.ascent() - bg_pad
+            bg_w = max_tw + bg_pad * 2
+            bg_h = total_h + bg_pad * 2
+            r = self.spn_bg_radius.value() * 2  # scale up for preview
+            p.setPen(Qt.NoPen)
+            p.setBrush(QBrush(self._bg_color))
+            p.drawRoundedRect(bg_x, bg_y, bg_w, bg_h, r, r)
+
+        # ---- Draw each line with buffer + text ----
         for i, line in enumerate(lines):
-            if not line:  # empty spacing line
+            if not line:  # empty spacing line → just skip (gap is in line_gap)
                 continue
             tw = fm.horizontalAdvance(line)
-            tx = (pw - tw) // 2
+            tx = cx - tw // 2
             ty = start_y + i * line_gap
+
+            # Buffer (text outline) — draw text in buffer color slightly offset in 8 dirs
+            if self.chk_buffer.isChecked():
+                buf_size = max(1, int(self.spn_buf_size.value()))
+                p.setPen(QPen(self._buf_color))
+                p.setFont(font)
+                for dx in range(-buf_size, buf_size + 1):
+                    for dy in range(-buf_size, buf_size + 1):
+                        if dx == 0 and dy == 0:
+                            continue
+                        p.drawText(tx + dx, ty + dy, line)
+
+            # Main text
+            p.setPen(QPen(self._font_color))
             p.drawText(tx, ty, line)
 
         p.end()
