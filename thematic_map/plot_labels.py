@@ -79,7 +79,7 @@ class PlotLabelsDialog(MBTilesDialog):
         QApplication.processEvents()
 
         if self.chk_show_label.isChecked():
-            expr = self._build_expression()
+            expr = self._get_active_expression()
             if expr:
                 from qgis.core import (
                     QgsPalLayerSettings, QgsVectorLayerSimpleLabeling,

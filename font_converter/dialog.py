@@ -9,9 +9,10 @@ Supports:
   - No conversion (re-export with format/CRS change)
   - Export to SHP (with .cpg) or MapInfo TAB
 
-Mapping tables based on standard Vietnamese encoding specifications.
+Mapping tables based on u-convert (https://github.com/anhskohbo/u-convert)
+and vietunicode.sourceforge.net/charset standard.
 
-Author: Lộc Vũ Trung (LVT) / Slow Forest
+Author: Lộc Vũ Trung (LVT)
 License: GPL-3.0
 """
 import os
@@ -33,51 +34,57 @@ from qgis.gui import QgsMapLayerComboBox
 from ..shared.i18n import current_language
 
 # ═══════════════════════════════════════════════════════════════
-# Parallel encoding lists (standard Vietnamese font mapping)
-# Index-matched: _UNICODE[i] ↔ _TCVN3[i]
+# TCVN3 ↔ Unicode mapping (134 chars, from u-convert reference)
+# TCVN3 uppercase = multi-byte (base-char + accent-byte)
+# TCVN3 lowercase = single accent-byte
 # ═══════════════════════════════════════════════════════════════
-_UNICODE = [
-    'â','Â','ă','Ă','đ','Đ','ê','Ê','ô','Ô','ơ','Ơ','ư','Ư',
-    'á','Á','à','À','ả','Ả','ã','Ã','ạ','Ạ',
-    'ấ','Ấ','ầ','Ầ','ẩ','Ẩ','ẫ','Ẫ','ậ','Ậ',
-    'ắ','Ắ','ằ','Ằ','ẳ','Ẳ','ẵ','Ẵ','ặ','Ặ',
-    'é','É','è','È','ẻ','Ẻ','ẽ','Ẽ','ẹ','Ẹ',
-    'ế','Ế','ề','Ề','ể','Ể','ễ','Ễ','ệ','Ệ',
-    'í','Í','ì','Ì','ỉ','Ỉ','ĩ','Ĩ','ị','Ị',
-    'ó','Ó','ò','Ò','ỏ','Ỏ','õ','Õ','ọ','Ọ',
-    'ố','Ố','ồ','Ồ','ổ','Ổ','ỗ','Ỗ','ộ','Ộ',
-    'ớ','Ớ','ờ','Ờ','ở','Ở','ỡ','Ỡ','ợ','Ợ',
-    'ú','Ú','ù','Ù','ủ','Ủ','ũ','Ũ','ụ','Ụ',
-    'ứ','Ứ','ừ','Ừ','ử','Ử','ữ','Ữ','ự','Ự',
-    'ỳ','Ỳ','ỷ','Ỷ','ỹ','Ỹ','ỵ','Ỵ','ý','Ý',
+
+# Index-matched parallel arrays: _UNICODE_FULL[i] ↔ _TCVN3_FULL[i]
+_UNICODE_FULL = [
+    'À','Á','Â','Ã','È','É','Ê','Ì','Í','Ò',
+    'Ó','Ô','Õ','Ù','Ú','Ý','à','á','â','ã',
+    'è','é','ê','ì','í','ò','ó','ô','õ','ù',
+    'ú','ý','Ă','ă','Đ','đ','Ĩ','ĩ','Ũ','ũ',
+    'Ơ','ơ','Ư','ư','Ạ','ạ','Ả','ả','Ấ','ấ',
+    'Ầ','ầ','Ẩ','ẩ','Ẫ','ẫ','Ậ','ậ','Ắ','ắ',
+    'Ằ','ằ','Ẳ','ẳ','Ẵ','ẵ','Ặ','ặ','Ẹ','ẹ',
+    'Ẻ','ẻ','Ẽ','ẽ','Ế','ế','Ề','ề','Ể','ể',
+    'Ễ','ễ','Ệ','ệ','Ỉ','ỉ','Ị','ị','Ọ','ọ',
+    'Ỏ','ỏ','Ố','ố','Ồ','ồ','Ổ','ổ','Ỗ','ỗ',
+    'Ộ','ộ','Ớ','ớ','Ờ','ờ','Ở','ở','Ỡ','ỡ',
+    'Ợ','ợ','Ụ','ụ','Ủ','ủ','Ứ','ứ','Ừ','ừ',
+    'Ử','ử','Ữ','ữ','Ự','ự','Ỳ','ỳ','Ỵ','ỵ',
+    'Ỷ','ỷ','Ỹ','ỹ',
 ]
 
-_TCVN3 = [
-    '©','¢','¨','¡','®','§','ª','£','«','¤','¬','¥','\xad','¦',
-    '¸','¸','µ','µ','¶','¶','·','·','¹','¹',
-    'Ê','Ê','Ç','Ç','È','È','É','É','Ë','Ë',
-    '¾','¾','»','»','¼','¼','½','½','Æ','Æ',
-    'Ð','Ð','Ì','Ì','Î','Î','Ï','Ï','Ñ','Ñ',
-    'Õ','Õ','Ò','Ò','Ó','Ó','Ô','Ô','Ö','Ö',
-    'Ý','Ý','×','×','Ø','Ø','Ü','Ü','Þ','Þ',
-    'ã','ã','ß','ß','á','á','â','â','ä','ä',
-    'è','è','å','å','æ','æ','ç','ç','é','é',
-    'í','í','ê','ê','ë','ë','ì','ì','î','î',
-    'ó','ó','ï','ï','ñ','ñ','ò','ò','ô','ô',
-    'ø','ø','õ','õ','ö','ö','÷','÷','ù','ù',
-    'ú','ú','û','û','ü','ü','þ','þ','ý','ý',
+_TCVN3_FULL = [
+    'A\xb5','A\xb8','\xa2','A\xb7','E\xcc','E\xd0','\xa3','I\xd7','I\xdd','O\xdf',
+    'O\xe3','\xa4','O\xe2','U\xef','U\xf3','Y\xfd','\xb5','\xb8','\xa9','\xb7',
+    '\xcc','\xd0','\xaa','\xd7','\xdd','\xdf','\xe3','\xab','\xe2','\xef',
+    '\xf3','\xfd','\xa1','\xa8','\xa7','\xae','I\xdc','\xdc','U\xf2','\xf2',
+    '\xa5','\xac','\xa6','\xad','A\xb9','\xb9','A\xb6','\xb6','\xa2\xca','\xca',
+    '\xa2\xc7','\xc7','\xa2\xc8','\xc8','\xa2\xc9','\xc9','\xa2\xcb','\xcb','\xa1\xbe','\xbe',
+    '\xa1\xbb','\xbb','\xa1\xbc','\xbc','\xa1\xbd','\xbd','\xa1\xc6','\xc6','E\xd1','\xd1',
+    'E\xce','\xce','E\xcf','\xcf','\xa3\xd5','\xd5','\xa3\xd2','\xd2','\xa3\xd3','\xd3',
+    '\xa3\xd4','\xd4','\xa3\xd6','\xd6','I\xd8','\xd8','I\xde','\xde','O\xe4','\xe4',
+    'O\xe1','\xe1','\xa4\xe8','\xe8','\xa4\xe5','\xe5','\xa4\xe6','\xe6','\xa4\xe7','\xe7',
+    '\xa4\xe9','\xe9','\xa5\xed','\xed','\xa5\xea','\xea','\xa5\xeb','\xeb','\xa5\xec','\xec',
+    '\xa5\xee','\xee','U\xf4','\xf4','U\xf1','\xf1','\xa6\xf8','\xf8','\xa6\xf5','\xf5',
+    '\xa6\xf6','\xf6','\xa6\xf7','\xf7','\xa6\xf9','\xf9','Y\xfa','\xfa','Y\xfe','\xfe',
+    'Y\xfb','\xfb','Y\xfc','\xfc',
 ]
 
-# Build fast lookup dicts from the parallel lists
+# Build lookup dicts — sort by length desc for multi-byte priority
 _UNI2TCVN = {}
 _TCVN2UNI = {}
-for _i, _u in enumerate(_UNICODE):
-    _t = _TCVN3[_i]
+for _i in range(len(_UNICODE_FULL)):
+    _u = _UNICODE_FULL[_i]
+    _t = _TCVN3_FULL[_i]
     _UNI2TCVN[_u] = _t
-    # For TCVN3→Unicode, TCVN3 has duplicate chars for upper/lower
-    # (e.g. '¸' maps to both 'á' and 'Á'). We keep the first (lowercase).
-    if _t not in _TCVN2UNI:
-        _TCVN2UNI[_t] = _u
+    _TCVN2UNI[_t] = _u
+
+# Sort TCVN3→Unicode by key length descending (multi-byte first)
+_TCVN2UNI_SORTED = sorted(_TCVN2UNI.items(), key=lambda x: len(x[0]), reverse=True)
 
 # CRS list (shared across modules)
 from .._crs_list import CRS_LIST
@@ -249,9 +256,6 @@ class FontConverterDialog(QDialog):
         QApplication.processEvents()
 
         # --- Write features with QgsVectorFileWriter (always UTF-8) ---
-        # Note: QgsVectorFileWriter ignores encoding param for MapInfo driver
-        # and always writes Charset "Neutral". We post-process the .TAB file
-        # header below to set the correct charset for MapInfo.
         writer = QgsVectorFileWriter(
             path, "UTF-8",
             layer.fields(), layer.wkbType(), layer.crs(),
@@ -440,34 +444,30 @@ class FontConverterDialog(QDialog):
             self.log.append(f'⚠️ Could not re-encode .DAT: {e}')
 
     # ═══════════════════════════════════════════════════════════════
-    # Conversion engines (index-based parallel list approach)
+    # Conversion engines (u-convert reference, multi-byte aware)
     # ═══════════════════════════════════════════════════════════════
     @staticmethod
     def _convert_tcvn3_to_unicode(text):
-        """TCVN3 → Unicode: replace each TCVN3 char with its Unicode equivalent."""
-        result = ''
-        for ch in text:
-            if ch in _TCVN2UNI:
-                result += _TCVN2UNI[ch]
-            else:
-                result += ch
-        return result
+        """TCVN3 → Unicode: multi-byte sequences first, then single-byte."""
+        for tcvn_seq, uni_char in _TCVN2UNI_SORTED:
+            if tcvn_seq in text:
+                text = text.replace(tcvn_seq, uni_char)
+        return text
 
     @staticmethod
     def _convert_unicode_to_tcvn3(text):
-        """Unicode → TCVN3: replace each Unicode Vietnamese char with TCVN3 equivalent."""
-        result = ''
+        """Unicode → TCVN3: single Unicode char → 1 or 2 byte TCVN3 sequence."""
+        result = []
         for ch in text:
             if ch in _UNI2TCVN:
-                result += _UNI2TCVN[ch]
+                result.append(_UNI2TCVN[ch])
             else:
-                result += ch
-        return result
+                result.append(ch)
+        return ''.join(result)
 
     @staticmethod
     def _convert_vni_to_unicode(text):
         """VNI → Unicode: multi-char sequences first, then single-char."""
-        # 2-char sequences
         _vni2 = [
             ('aâ','â'),('AÂ','Â'),('aê','ă'),('AÊ','Ă'),('eâ','ê'),('EÂ','Ê'),
             ('aù','á'),('AÙ','Á'),('aø','à'),('AØ','À'),('aû','ả'),('AÛ','Ả'),
@@ -493,13 +493,11 @@ class FontConverterDialog(QDialog):
             ('yõ','ỹ'),('YÕ','Ỹ'),('yù','ý'),('YÙ','Ý'),
             ('où','ó'),('OÙ','Ó'),('oø','ò'),('OØ','Ò'),('oâ','ô'),('OÂ','Ô'),
         ]
-        # 1-char sequences
         _vni1 = [
             ('ñ','đ'),('Ñ','Đ'),('í','í'),('Í','Í'),
             ('ì','ì'),('Ì','Ì'),('æ','ỉ'),('Æ','Ỉ'),
             ('ö','ư'),('Ö','Ư'),('î','ỵ'),('Î','Ỵ'),
         ]
-        # Apply 2-char first
         for old, new in _vni2:
             text = text.replace(old, new)
         for old, new in _vni1:

@@ -394,13 +394,20 @@ class MBTilesDialog(QDialog):
         )
         right_col.addWidget(self.lbl_preview, 1)
 
-        # Expression
+        # Expression with edit toggle
+        expr_row = QHBoxLayout()
         self.txt_expr = QLineEdit()
         self.txt_expr.setReadOnly(True)
         self.txt_expr.setStyleSheet(
             "background:#f0f0f0;font-family:monospace;font-size:11px;"
         )
-        right_col.addWidget(self.txt_expr)
+        expr_row.addWidget(self.txt_expr, 1)
+        self.chk_edit_expr = QCheckBox("✏️")
+        self.chk_edit_expr.setToolTip("Bật/tắt chỉnh sửa công thức / Toggle expression editing")
+        self.chk_edit_expr.setFixedWidth(32)
+        self.chk_edit_expr.toggled.connect(self._toggle_expr_edit)
+        expr_row.addWidget(self.chk_edit_expr)
+        right_col.addLayout(expr_row)
 
         main_cols.addLayout(right_col, 6)
         lbl_ly.addLayout(main_cols, 1)
@@ -583,6 +590,28 @@ class MBTilesDialog(QDialog):
     def _checked(self, cdict, order_list):
         """Return checked fields sorted by selection order."""
         return [f for f in order_list if f in cdict and cdict[f].isChecked()]
+
+    # ---- Expression edit toggle ----
+    def _toggle_expr_edit(self, checked):
+        """Toggle expression field between read-only and editable."""
+        self.txt_expr.setReadOnly(not checked)
+        if checked:
+            self.txt_expr.setStyleSheet(
+                "background:#fff;font-family:monospace;font-size:11px;"
+                "border:2px solid #1B5E20;"
+            )
+        else:
+            self.txt_expr.setStyleSheet(
+                "background:#f0f0f0;font-family:monospace;font-size:11px;"
+            )
+            # Reset to auto-generated expression
+            self.txt_expr.setText(self._build_expression())
+
+    def _get_active_expression(self):
+        """Return user-edited expression if edit mode is on, else auto-built."""
+        if hasattr(self, 'chk_edit_expr') and self.chk_edit_expr.isChecked():
+            return self.txt_expr.text().strip()
+        return self._build_expression()
 
     # ---- Expression ----
     def _build_expression(self):
@@ -1044,7 +1073,7 @@ class MBTilesDialog(QDialog):
 
         # Labels
         if self.chk_show_label.isChecked():
-            expr = self._build_expression()
+            expr = self._get_active_expression()
             if expr:
                 s = QgsPalLayerSettings()
                 s.fieldName = expr
