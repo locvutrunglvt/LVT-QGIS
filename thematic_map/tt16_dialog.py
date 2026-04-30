@@ -15,14 +15,13 @@ License: GPL-3.0
 import json
 import os
 
-from qgis.PyQt.QtCore import Qt, QUrl
-from qgis.PyQt.QtGui import QDesktopServices
-from qgis.PyQt.QtGui import QColor, QFont, QIcon, QPixmap, QPainter  # noqa: F811
+from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtGui import QColor, QFont, QIcon, QPixmap, QPainter
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QAbstractItemView, QFrame,
-    QTabWidget, QWidget,
+    QTabWidget, QWidget, QTextBrowser,
 )
 from qgis.core import QgsVectorLayer, QgsWkbTypes
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
@@ -129,10 +128,10 @@ class TT16Dialog(QDialog):
         self.tabs.addTab(tab_ref, "📋 LDLR_Ref")
         self._build_ref_tab(tab_ref)
 
-        # --- Tab 3: Legal Documents ---
-        tab_legal = QWidget()
-        self.tabs.addTab(tab_legal, "📜 " + tr("Legal Docs"))
-        self._build_legal_tab(tab_legal)
+        # --- Tab 3: Appendix 1 Summary ---
+        tab_appendix = QWidget()
+        self.tabs.addTab(tab_appendix, "📜 " + tr("Appendix 1"))
+        self._build_appendix_tab(tab_appendix)
 
         # Init
         self._on_layer_changed(self.cmb_layer.currentLayer())
@@ -324,94 +323,90 @@ class TT16Dialog(QDialog):
             self.tbl.setItem(i, 5, hi)
 
     # -----------------------------------------------------------------
-    # Legal Documents tab
+    # Appendix 1 — LDLR Classification Summary
     # -----------------------------------------------------------------
-    _LEGAL_DOCS = [
-        {
-            "file": "TT16_2023_BNN.pdf",
-            "vi": "📄  Thông tư 16/2023/TT-BNNPTNT (bản ký)",
-            "en": "📄  Circular 16/2023/TT-BNNPTNT (signed)",
-            "desc_vi": "Quy định về trình tự, thủ tục phân loại đất, rừng",
-            "desc_en": "Regulations on land and forest classification procedures",
-        },
-        {
-            "file": "TT16_PhuLuc_45_46.doc",
-            "vi": "📎  Phụ lục 45 + 46",
-            "en": "📎  Appendix 45 + 46",
-            "desc_vi": "Bảng phân loại đất, rừng (phần 1)",
-            "desc_en": "Land and forest classification tables (part 1)",
-        },
-        {
-            "file": "TT16_PhuLuc_47_48.doc",
-            "vi": "📎  Phụ lục 47 + 48",
-            "en": "📎  Appendix 47 + 48",
-            "desc_vi": "Bảng phân loại đất, rừng (phần 2)",
-            "desc_en": "Land and forest classification tables (part 2)",
-        },
+    # Group definitions: (prefix_pattern, vi_group, en_group, color)
+    _GROUPS = [
+        ("TXG,TXB,TXN,TXK,TXP,TXG1,TXB1", "I. Rừng gỗ tự nhiên núi đất — Lá rộng thường xanh",
+         "I. Natural timber on soil mountain — Evergreen broadleaved", "#00D000"),
+        ("RLG,RLB,RLN,RLK,RLP,RLG1,RLB1", "II. Rừng gỗ tự nhiên núi đất — Lá rộng rụng lá",
+         "II. Natural timber on soil mountain — Deciduous", "#C0C000"),
+        ("LKG,LKB,LKN,LKK,LKP,LKG1,LKB1", "III. Rừng gỗ tự nhiên núi đất — Lá kim",
+         "III. Natural timber on soil mountain — Coniferous", "#FF505A"),
+        ("RKG,RKB,RKN,RKK,RKP,RKG1,RKB1", "IV. Rừng gỗ tự nhiên núi đất — Lá rộng lá kim",
+         "IV. Natural timber on soil mountain — Mixed broadleaved-coniferous", "#FFA0D0"),
+        ("TXDG1,TXDB1,TXDK,TXDB,TXDN,TXDP", "V. Rừng gỗ tự nhiên núi đá",
+         "V. Natural timber on rocky mountain", "#00D068"),
+        ("RNM1,RNMG,RNMB,RNMN,RNMP,RNP1,RNPG,RNPB,RNPN,RNPP,RNN1,RNN",
+         "VI. Rừng gỗ tự nhiên ngập nước",
+         "VI. Natural timber on wetland", "#7070FF"),
+        ("TLU,NUA,VAU,LOO,TNK,TND", "VII. Rừng tre nứa tự nhiên",
+         "VII. Natural bamboo forest", "#D0E0FF"),
+        ("HG1,HG2,HGD", "VIII. Rừng hỗn giao gỗ — tre nứa",
+         "VIII. Mixed wood-bamboo forest", "#FFD0FF"),
+        ("CD,CDD,CDN", "IX. Rừng cau dừa tự nhiên",
+         "IX. Natural palm/coconut forest", "#C0C0FF"),
+        ("RTG,RTGD,RTM,RTP,RTC,RTTN,RTTND,RTCD,RTCDN,RTCDC,RTK,RTKD,DTR,DTRD,DTRM,DTRP,DTRN,DTRC",
+         "X. Rừng trồng & Đất đã trồng",
+         "X. Plantation & Newly planted land", "#FFC080"),
+        ("DT2,DT2D,DT2M,DT2P,DT1,DT1D,DT1M,DT1P,BC1,BC2,NN,NLD,NLM,NLP,MN,DKH",
+         "XI. Đất tái sinh, đất trống, nông nghiệp & khác",
+         "XI. Regeneration, open land, agriculture & other", "#00A000"),
     ]
 
-    def _build_legal_tab(self, parent):
+    def _build_appendix_tab(self, parent):
+        """Build Appendix 1 summary as an HTML tree view."""
         ly = QVBoxLayout(parent)
-        ly.setSpacing(12)
-
         lang = current_language()
-        hdr_text = (
-            "📜  Văn bản pháp lý — Thông tư 16/2023"
-            if lang == 'vi'
-            else "📜  Legal Documents — Circular 16/2023"
-        )
-        lbl = QLabel(hdr_text)
-        lbl.setFont(QFont("Segoe UI", 11, QFont.Bold))
-        lbl.setStyleSheet("color:#5d4037; padding:4px 0;")
-        ly.addWidget(lbl)
+        codes = self._master["codes"]
+        code_map = {c["text_code"]: c for c in codes}
 
-        for doc in self._LEGAL_DOCS:
-            row = QVBoxLayout()
-            row.setSpacing(2)
+        html = [
+            '<html><body style="font-family:Segoe UI,sans-serif;font-size:12px;">',
+            '<h3 style="color:#5d4037;">',
+            'Phụ lục 1 — Bảng mã loại đất loại rừng (93 mã)'
+            if lang == 'vi' else
+            'Appendix 1 — Land & Forest Type Classification (93 codes)',
+            '</h3>',
+            '<p style="color:#888;font-size:11px;">',
+            'Thông tư 16/2023/TT-BNNPTNT — Bộ NN&PTNT'
+            if lang == 'vi' else
+            'Circular 16/2023/TT-BNNPTNT — MARD Vietnam',
+            '</p><hr>',
+        ]
 
-            btn = QPushButton(doc[lang])
-            btn.setFont(QFont("Segoe UI", 10))
-            btn.setMinimumHeight(36)
-            btn.setCursor(Qt.PointingHandCursor)
-            btn.setStyleSheet(
-                "QPushButton{text-align:left;padding:6px 12px;"
-                "background:#fff8e1;border:1px solid #ffe082;border-radius:4px;}"
-                "QPushButton:hover{background:#fff3c4;border-color:#ffc107;}"
+        for grp_codes, vi_name, en_name, color in self._GROUPS:
+            grp_name = vi_name if lang == 'vi' else en_name
+            html.append(
+                f'<h4 style="color:{color};margin:8px 0 4px 0;">'
+                f'{grp_name}</h4>'
             )
-            filepath = doc["file"]
-            btn.clicked.connect(
-                lambda checked, f=filepath: self._open_legal_doc(f)
-            )
-            row.addWidget(btn)
+            html.append('<table cellspacing="0" cellpadding="2" '
+                        'style="margin-left:12px;border-collapse:collapse;">')
+            for tc in grp_codes.split(','):
+                tc = tc.strip()
+                c = code_map.get(tc)
+                if not c:
+                    continue
+                name = c.get(f"name_{lang}", c.get("name_en", ""))
+                hex_c = c["hex"]
+                html.append(
+                    f'<tr>'
+                    f'<td style="width:60px;font-weight:bold;color:#333;">{tc}</td>'
+                    f'<td style="width:30px;">'
+                    f'<span style="background:{hex_c};padding:1px 8px;'
+                    f'border:1px solid #ccc;">&nbsp;</span></td>'
+                    f'<td style="color:#555;padding-left:6px;">{name}</td>'
+                    f'</tr>'
+                )
+            html.append('</table>')
 
-            desc = QLabel("    " + doc[f"desc_{lang}"])
-            desc.setStyleSheet("color:#888; font-size:11px;")
-            row.addWidget(desc)
+        html.append('</body></html>')
 
-            ly.addLayout(row)
-
-        ly.addStretch()
-
-        note_text = (
-            "💡 Nhấn vào tài liệu để mở bằng ứng dụng mặc định"
-            if lang == 'vi'
-            else "💡 Click a document to open with default application"
-        )
-        note = QLabel(note_text)
-        note.setStyleSheet("color:#aaa; font-size:10px; padding:4px;")
-        ly.addWidget(note)
-
-    def _open_legal_doc(self, filename):
-        """Open a legal document with the system's default application."""
-        docs_dir = os.path.join(os.path.dirname(__file__), os.pardir, "docs")
-        filepath = os.path.normpath(os.path.join(docs_dir, filename))
-        if os.path.isfile(filepath):
-            QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
-        else:
-            QMessageBox.warning(
-                self, "File not found",
-                f"Cannot find: {filepath}"
-            )
+        browser = QTextBrowser()
+        browser.setHtml('\n'.join(html))
+        browser.setOpenExternalLinks(False)
+        ly.addWidget(browser)
 
     # -----------------------------------------------------------------
     # Colour table — adapts to style type AND language (for Apply tab)

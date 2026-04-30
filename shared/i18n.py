@@ -56,6 +56,7 @@ _TRANSLATIONS = {
     "Apply": "Áp dụng",
     "Plot Labels": "Nhãn lô",
     "Legal Docs": "Văn bản pháp lý",
+    "Appendix 1": "Phụ lục 1",
 
     # --- Messages ---
     "{module} — Coming soon!": "{module} — Sắp ra mắt!",
