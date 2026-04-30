@@ -146,15 +146,22 @@ class TT16Dialog(QDialog):
         self.iface = iface
         self.setWindowTitle("LVT4U — " + tr("Circular 16/2023"))
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-        self.setMinimumWidth(740)
+        self.setMinimumWidth(640)
         self.setMinimumHeight(520)
-        # Open near-full-screen for better usability
+        # Open 60% width × 97% height for optimal layout
         try:
             from qgis.PyQt.QtWidgets import QApplication
             screen = QApplication.primaryScreen().availableGeometry()
-            self.resize(int(screen.width() * 0.85), int(screen.height() * 0.92))
+            w = int(screen.width() * 0.60)
+            h = int(screen.height() * 0.97)
+            self.resize(w, h)
+            # Center on screen
+            self.move(
+                screen.x() + (screen.width() - w) // 2,
+                screen.y() + (screen.height() - h) // 2,
+            )
         except Exception:
-            self.resize(960, 780)
+            self.resize(820, 780)
         self._master = _load_master()
         self._ready = False
         self._build_ui()
@@ -163,8 +170,8 @@ class TT16Dialog(QDialog):
     # -----------------------------------------------------------------
     def _build_ui(self):
         root = QVBoxLayout(self)
-        root.setSpacing(6)
-        root.setContentsMargins(12, 10, 12, 10)
+        root.setSpacing(4)
+        root.setContentsMargins(8, 6, 8, 6)
 
         # Header
         hdr = QLabel("🎨  TT 16/2023 — LDLR Style Library")
