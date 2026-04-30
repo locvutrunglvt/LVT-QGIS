@@ -51,6 +51,8 @@ _TRANSLATIONS = {
     "Circular 33": "Theo TT 33",
     "Style Library": "Thư viện định dạng",
     "Excel → GIS": "Chuyển Excel vào bản đồ",
+    "Thematic Map": "Bản đồ chuyên đề",
+    "Apply Style": "Áp dụng kiểu",
 
     # --- Messages ---
     "{module} — Coming soon!": "{module} — Sắp ra mắt!",

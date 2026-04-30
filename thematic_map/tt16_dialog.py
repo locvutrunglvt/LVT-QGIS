@@ -118,26 +118,21 @@ class TT16Dialog(QDialog):
         self.tabs = QTabWidget()
         root.addWidget(self.tabs, 1)
 
-        # --- Tab 1: Apply Style ---
-        tab_apply = QWidget()
-        self.tabs.addTab(tab_apply, "🎨 " + tr("Apply Style"))
-        self._build_apply_tab(tab_apply)
+        # --- Tab 1: Apply Style + Plot Labels ---
+        tab_main = QWidget()
+        self.tabs.addTab(tab_main, "🎨 " + tr("Thematic Map"))
+        self._build_main_tab(tab_main)
 
         # --- Tab 2: LDLR Reference ---
         tab_ref = QWidget()
         self.tabs.addTab(tab_ref, "📋 LDLR_Ref")
         self._build_ref_tab(tab_ref)
 
-        # --- Tab 3: Plot Labels ---
-        tab_labels = QWidget()
-        self.tabs.addTab(tab_labels, "🏷️ " + tr("Plot Labels"))
-        self._build_labels_tab(tab_labels)
-
         # Init
         self._on_layer_changed(self.cmb_layer.currentLayer())
         self._on_style_changed(self.cmb_style.currentIndex())
 
-    def _build_apply_tab(self, parent):
+    def _build_main_tab(self, parent):
         ly = QVBoxLayout(parent)
         ly.setSpacing(8)
 
@@ -209,18 +204,40 @@ class TT16Dialog(QDialog):
         btn_row.addStretch()
         ly.addLayout(btn_row)
 
-        ly.addStretch()
+        # Separator
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setStyleSheet("color:#ccc;")
+        ly.addWidget(line)
+
+        # Plot Labels section header
+        lbl_labels = QLabel("🏷️  " + tr("Plot Labels"))
+        lbl_labels.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        lbl_labels.setStyleSheet("color:#2e7d32; padding:2px 0;")
+        ly.addWidget(lbl_labels)
+
+        # Embed Plot Labels dialog as widget
+        try:
+            from .plot_labels import PlotLabelsDialog
+            self._label_dlg = PlotLabelsDialog(self.iface, parent)
+            self._label_dlg.setWindowFlags(Qt.Widget)
+            ly.addWidget(self._label_dlg, 1)
+        except Exception as e:
+            ly.addWidget(QLabel(f"Plot Labels: {e}"))
 
     def _build_ref_tab(self, parent):
         ly = QVBoxLayout(parent)
 
-        self.lbl_table = QLabel("")
+        self.lbl_table = QLabel("📋  LDLR — 93 codes / 93 mã loại đất loại rừng")
         self.lbl_table.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.lbl_table.setStyleSheet("padding:2px 0;")
         ly.addWidget(self.lbl_table)
 
         self.tbl = QTableWidget()
-        self.tbl.setColumnCount(4)
+        self.tbl.setColumnCount(6)
+        self.tbl.setHorizontalHeaderLabels(
+            ["LDLR", "Code", "Colour", "Tên (VN)", "Name (EN)", "HEX"]
+        )
         self.tbl.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tbl.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.tbl.setAlternatingRowColors(True)
@@ -228,63 +245,34 @@ class TT16Dialog(QDialog):
         self.tbl.verticalHeader().setVisible(False)
         hh = self.tbl.horizontalHeader()
         hh.setDefaultAlignment(Qt.AlignLeft)
-        self.tbl.setColumnWidth(0, 65)
-        self.tbl.setColumnWidth(1, 32)
-        self.tbl.setColumnWidth(3, 72)
-        hh.setSectionResizeMode(2, QHeaderView.Stretch)
+        self.tbl.setColumnWidth(0, 60)
+        self.tbl.setColumnWidth(1, 42)
+        self.tbl.setColumnWidth(2, 32)
+        self.tbl.setColumnWidth(5, 72)
+        hh.setSectionResizeMode(3, QHeaderView.Stretch)
+        hh.setSectionResizeMode(4, QHeaderView.Stretch)
         ly.addWidget(self.tbl, 1)
 
-    def _build_labels_tab(self, parent):
-        """Embed the Plot Labels dialog content inside this tab."""
-        ly = QVBoxLayout(parent)
+        # Populate immediately
+        self._populate_ref_table()
 
-        try:
-            from .plot_labels import PlotLabelsDialog
-            self._label_dlg = PlotLabelsDialog(self.iface, parent)
-            # Remove window frame — embed as widget
-            self._label_dlg.setWindowFlags(Qt.Widget)
-            ly.addWidget(self._label_dlg)
-        except Exception as e:
-            ly.addWidget(QLabel(f"Plot Labels not available: {e}"))
-
-    # -----------------------------------------------------------------
-    # Colour table — adapts to style type AND language
-    # -----------------------------------------------------------------
-    def _populate_table(self, style):
-        """Populate table based on style: show text_code or num_code,
-        and names in the style's language."""
+    def _populate_ref_table(self):
+        """Fill the reference table with all 93 codes — bilingual."""
         codes = self._master["codes"]
-        lang = style["lang"]
-        vtype = style["value_type"]
-
         self.tbl.setRowCount(len(codes))
 
-        # Headers
-        if lang == "vi":
-            code_hdr = "Mã số" if vtype == "numeric" else "Mã"
-            self.tbl.setHorizontalHeaderLabels([code_hdr, "Màu", "Tên", "HEX"])
-            self.lbl_table.setText(
-                f"📋  LDLR — 93 mã ({'số 1–93' if vtype == 'numeric' else 'chữ'})"
-            )
-        else:
-            code_hdr = "Code" if vtype == "numeric" else "LDLR"
-            self.tbl.setHorizontalHeaderLabels([code_hdr, "Colour", "Name", "HEX"])
-            self.lbl_table.setText(
-                f"📋  LDLR — 93 codes ({'numeric 1–93' if vtype == 'numeric' else 'text'})"
-            )
-
         for i, c in enumerate(codes):
-            # Code column: show num_code or text_code based on style
-            if vtype == "numeric":
-                code_val = c.get("num_code", "")
-            else:
-                code_val = c.get("text_code", c.get("code", ""))
+            # Col 0: LDLR text code
+            it0 = QTableWidgetItem(str(c.get("text_code", "")))
+            it0.setTextAlignment(Qt.AlignCenter)
+            self.tbl.setItem(i, 0, it0)
 
-            it = QTableWidgetItem(str(code_val))
-            it.setTextAlignment(Qt.AlignCenter)
-            self.tbl.setItem(i, 0, it)
+            # Col 1: Numeric code
+            it1 = QTableWidgetItem(str(c.get("num_code", "")))
+            it1.setTextAlignment(Qt.AlignCenter)
+            self.tbl.setItem(i, 1, it1)
 
-            # Colour swatch
+            # Col 2: Colour swatch
             px = QPixmap(20, 14)
             clr = QColor(c["hex"])
             px.fill(clr)
@@ -295,17 +283,31 @@ class TT16Dialog(QDialog):
             ci = QTableWidgetItem()
             ci.setIcon(QIcon(px))
             ci.setBackground(clr)
-            self.tbl.setItem(i, 1, ci)
+            self.tbl.setItem(i, 2, ci)
 
-            # Name in style's language
-            name = c.get(f"name_{lang}", c.get("name_en", ""))
-            self.tbl.setItem(i, 2, QTableWidgetItem(name))
+            # Col 3: Vietnamese name
+            self.tbl.setItem(i, 3, QTableWidgetItem(
+                c.get("name_vi", "")
+            ))
 
-            # HEX
+            # Col 4: English name
+            self.tbl.setItem(i, 4, QTableWidgetItem(
+                c.get("name_en", "")
+            ))
+
+            # Col 5: HEX
             hi = QTableWidgetItem(c["hex"])
             hi.setTextAlignment(Qt.AlignCenter)
             hi.setForeground(QColor(100, 100, 100))
-            self.tbl.setItem(i, 3, hi)
+            self.tbl.setItem(i, 5, hi)
+
+    # -----------------------------------------------------------------
+    # Colour table — adapts to style type AND language (for Apply tab)
+    # -----------------------------------------------------------------
+    def _populate_table(self, style):
+        """Update table header label when style changes (ref tab is static)."""
+        # Ref tab is always bilingual — no need to rebuild
+        pass
 
     # -----------------------------------------------------------------
     # Events
