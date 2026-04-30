@@ -46,11 +46,11 @@ class MBTilesDialog(QDialog):
         super().__init__(parent or iface.mainWindow())
         self.iface = iface
         self.lang = 'vi'
-        self._stroke_color = QColor("#FF0000")
-        self._fill_color = QColor("#FFFF00")
-        self._font_color = QColor("#000000")
-        self._buf_color = QColor("#FFFFFF")
-        self._bg_color = QColor("#FFFFCC")
+        self._stroke_color = QColor("#55ff00")
+        self._fill_color = QColor("#ffff00")
+        self._font_color = QColor("#00ffff")
+        self._buf_color = QColor("#ffffff")
+        self._bg_color = QColor("#ffaa00")
         self._num_checks = {}
         self._den_checks = {}
         self._num_order = []   # tracks selection sequence
@@ -159,7 +159,7 @@ class MBTilesDialog(QDialog):
         self.lbl_fill_op = QLabel()
         self.spn_fill_op = QSpinBox()
         self.spn_fill_op.setRange(0, 100)
-        self.spn_fill_op.setValue(30)
+        self.spn_fill_op.setValue(5)
         self.spn_fill_op.setSuffix(" %")
         fs.addWidget(self.lbl_fill_op, 1, 2)
         fs.addWidget(self.spn_fill_op, 1, 3)
@@ -277,7 +277,7 @@ class MBTilesDialog(QDialog):
         self.lbl_line_h = QLabel()
         self.spn_line_h = QDoubleSpinBox()
         self.spn_line_h.setRange(5, 300)
-        self.spn_line_h.setValue(100)
+        self.spn_line_h.setValue(20)
         self.spn_line_h.setSuffix(" %")
         fg.addWidget(self.lbl_line_h, 1, 3)
         fg.addWidget(self.spn_line_h, 1, 4)
@@ -297,13 +297,11 @@ class MBTilesDialog(QDialog):
         fg.addWidget(self.spn_spacing, 2, 3)
 
         # Scale visibility — intuitive labels
-        # "Zoom gần" = large scale (small denominator) = QGIS maximumScale
-        # "Zoom xa"  = small scale (large denominator) = QGIS minimumScale
         self.lbl_zoom_in = QLabel()
         self.cbo_zoom_in = QComboBox()
         for s in _SCALES:
             self.cbo_zoom_in.addItem(f"1:{s:,}".replace(",", "."), s)
-        self.cbo_zoom_in.setCurrentIndex(_SCALES.index(1000))  # 1:1,000
+        self.cbo_zoom_in.setCurrentIndex(_SCALES.index(1000))
         fg.addWidget(self.lbl_zoom_in, 3, 0)
         fg.addWidget(self.cbo_zoom_in, 3, 1)
 
@@ -311,7 +309,7 @@ class MBTilesDialog(QDialog):
         self.cbo_zoom_out = QComboBox()
         for s in _SCALES:
             self.cbo_zoom_out.addItem(f"1:{s:,}".replace(",", "."), s)
-        self.cbo_zoom_out.setCurrentIndex(_SCALES.index(50000))  # 1:50,000
+        self.cbo_zoom_out.setCurrentIndex(_SCALES.index(7500))
         fg.addWidget(self.lbl_zoom_out, 3, 2)
         fg.addWidget(self.cbo_zoom_out, 3, 3)
 
@@ -433,6 +431,33 @@ class MBTilesDialog(QDialog):
         btn_row.addWidget(self.btn_export)
         ly.addLayout(btn_row)
 
+        # ═══ Reset / Save Config ═══
+        cfg_row = QHBoxLayout()
+        self.btn_reset = QPushButton()
+        self.btn_reset.clicked.connect(self._reset_defaults)
+        self.btn_reset.setStyleSheet(
+            "padding:6px;background:#F57C00;color:white;"
+            "font-weight:bold;border-radius:4px;"
+        )
+        cfg_row.addWidget(self.btn_reset)
+
+        self.btn_save_cfg = QPushButton()
+        self.btn_save_cfg.clicked.connect(self._save_config)
+        self.btn_save_cfg.setStyleSheet(
+            "padding:6px;background:#6A1B9A;color:white;"
+            "font-weight:bold;border-radius:4px;"
+        )
+        cfg_row.addWidget(self.btn_save_cfg)
+
+        self.btn_load_cfg = QPushButton()
+        self.btn_load_cfg.clicked.connect(self._load_config)
+        self.btn_load_cfg.setStyleSheet(
+            "padding:6px;background:#00695C;color:white;"
+            "font-weight:bold;border-radius:4px;"
+        )
+        cfg_row.addWidget(self.btn_load_cfg)
+        ly.addLayout(cfg_row)
+
         self.progress = QProgressBar()
         self.progress.setVisible(False)
         self.progress.setRange(0, 100)
@@ -457,12 +482,14 @@ class MBTilesDialog(QDialog):
 
     # ---- Color ----
     def _pick_color(self, target):
-        cur = {"stroke": self._stroke_color, "fill": self._fill_color,
-               "font": self._font_color, "buffer": self._buf_color,
-               "bg": self._bg_color}[target]
+        _MAP = {"stroke": "_stroke_color", "fill": "_fill_color",
+                "font": "_font_color", "buffer": "_buf_color",
+                "bg": "_bg_color"}
+        attr = _MAP[target]
+        cur = getattr(self, attr)
         c = QColorDialog.getColor(cur, self)
         if c.isValid():
-            setattr(self, f"_{target}_color", c)
+            setattr(self, attr, c)
             self._update_color_buttons()
             self._update_preview()
 
@@ -728,51 +755,220 @@ class MBTilesDialog(QDialog):
         self.btn_layer_ext.setText("🗺️ " + self._t("Use Layer Extent"))
         self.lbl_minz.setText(self._t("Min Zoom:"))
         self.lbl_maxz.setText(self._t("Max Zoom:"))
+        if self.lang == 'vi':
+            self.btn_reset.setText("🔄 Đặt lại")
+            self.btn_save_cfg.setText("💾 Lưu cấu hình")
+            self.btn_load_cfg.setText("📂 Tải cấu hình")
+            self.txt_guide.setHtml("""
+            <h2 style='color:#1B5E20;'>Hướng dẫn sử dụng MBTiles Creator</h2>
+            <h3>Bước 1 — Chọn lớp dữ liệu</h3>
+            <p>Chọn lớp vector polygon từ danh sách. Thông tin hình học và số đối tượng sẽ hiển thị tự động.</p>
+
+            <h3>Bước 2 — Thiết lập nét lực / nền polygon</h3>
+            <p><b>Nét lực (Stroke):</b> Chọn màu viền lô (#55ff00 = xanh lá) và độ rộng (mặc định 0.5 px).<br>
+            <b>Nền (Fill):</b> Chọn màu nền lô (#ffff00 = vàng) và độ mờ (mặc định 5% = gần trong suốt).</p>
+
+            <h3>Bước 3 — Cấu hình Nhãn lô (dạng phân số)</h3>
+            <p>☑ Tick <b>"Hiển thị nhãn"</b> để bật.</p>
+            <p><b>▲ Tử số (trên):</b> Tick các trường muốn hiển thị. Thứ tự tick = thứ tự hiển thị từ trái → phải.<br>
+            <b>▼ Mẫu số (dưới):</b> Tick các trường tương tự.<br>
+            <b>Nối:</b> Ký tự nối giữa các trường (mặc định "-").<br>
+            <b>Hậu tố:</b> Thêm đơn vị sau giá trị (ví dụ: "ha", "cây", "m²").</p>
+
+            <h3>Bước 4 — Phông chữ & Định dạng</h3>
+            <p><b>Phông:</b> Chọn font (mặc định Arial).<br>
+            <b>Cỡ:</b> Kích thước chữ (pt).<br>
+            <b>Màu:</b> Màu chữ (#00ffff = cyan).<br>
+            <b>Đậm:</b> Tick nếu muốn in đậm.<br>
+            <b>Giãn dòng (%):</b> Khoảng cách giữa tử số và mẫu số. <i>20% = compact</i>, 100% = bình thường.<br>
+            <b>Số gạch dưới:</b> Số ký tự "_" ngăn cách tử/mẫu.<br>
+            <b>Số dòng giãn:</b> Số dòng trống thêm giữa gạch và mẫu số.</p>
+
+            <h3>Bước 5 — Tỷ lệ hiển thị</h3>
+            <p><b>🔍+ Gần:</b> Tỷ lệ khi zoom gần nhất (mặc định 1:1.000).<br>
+            <b>🔍− Xa:</b> Tỷ lệ khi zoom xa nhất (mặc định 1:7.500).<br>
+            Nhãn chỉ hiển thị khi bản đồ nằm trong khoảng này.</p>
+
+            <h3>Bước 6 — Viền chữ & Nền chữ</h3>
+            <p><b>☑ Viền chữ (Buffer):</b> Tạo viền xung quanh chữ giúp dễ đọc. Chọn màu và độ dày (mm).<br>
+            <b>☐ Nền chữ (Background):</b> Khung nền phía sau nhãn. Chọn màu, bo góc (mm).</p>
+
+            <h3>Bước 7 — Xem trước</h3>
+            <p>Khu vực <b>"Xem trước"</b> hiển thị nhãn trên nền polygon ngay khi thay đổi.<br>
+            ☑ <b>Nền vệ tinh:</b> Bật tắt ảnh nền để kiểm tra tương phản.</p>
+
+            <h3>Bước 8 — Áp dụng / Xuất</h3>
+            <p>🎨 <b>Áp dụng kiểu:</b> Gán tất cả cài đặt lên layer QGIS ngay lập tức.<br>
+            📦 <b>Export MBTiles:</b> Xuất vùng chọn thành file .mbtiles.<br>
+            🔄 <b>Đặt lại:</b> Khôi phục toàn bộ về mặc định.<br>
+            💾 <b>Lưu cấu hình:</b> Lưu cài đặt hiện tại ra file JSON.<br>
+            📂 <b>Tải cấu hình:</b> Nạp lại cài đặt từ file JSON đã lưu.</p>
+            """)
+        else:
+            self.btn_reset.setText("🔄 Reset")
+            self.btn_save_cfg.setText("💾 Save Config")
+            self.btn_load_cfg.setText("📂 Load Config")
+            self.txt_guide.setHtml("""
+            <h2 style='color:#1B5E20;'>MBTiles Creator — Step-by-Step Guide</h2>
+            <h3>Step 1 — Select Layer</h3>
+            <p>Choose a vector polygon layer from the dropdown. Geometry type and feature count are shown automatically.</p>
+
+            <h3>Step 2 — Stroke & Fill</h3>
+            <p><b>Stroke:</b> Pick outline color (#55ff00 = green) and width (default 0.5 px).<br>
+            <b>Fill:</b> Pick fill color (#ffff00 = yellow) and opacity (default 5% = nearly transparent).</p>
+
+            <h3>Step 3 — Configure Plot Label (Fraction format)</h3>
+            <p>☑ Check <b>"Show Label"</b> to enable.</p>
+            <p><b>▲ Numerator (top):</b> Check fields to display. Check order = display order left → right.<br>
+            <b>▼ Denominator (bottom):</b> Check fields similarly.<br>
+            <b>Sep:</b> Separator character between fields (default "-").<br>
+            <b>Suffix:</b> Append unit after value (e.g. "ha", "trees", "m²").</p>
+
+            <h3>Step 4 — Font & Formatting</h3>
+            <p><b>Font:</b> Select font (default Arial).<br>
+            <b>Size:</b> Point size.<br>
+            <b>Color:</b> Font color (#00ffff = cyan).<br>
+            <b>Bold:</b> Check to bold.<br>
+            <b>Line Height (%):</b> Spacing between numerator and denominator. <i>20% = compact</i>, 100% = normal.<br>
+            <b>Underline count:</b> Number of "_" chars.<br>
+            <b>Spacing lines:</b> Extra blank lines between underline and denominator.</p>
+
+            <h3>Step 5 — Scale Visibility</h3>
+            <p><b>🔍+ Near:</b> Most zoomed-in scale (default 1:1,000).<br>
+            <b>🔍− Far:</b> Most zoomed-out scale (default 1:7,500).<br>
+            Labels only render when the map is within this range.</p>
+
+            <h3>Step 6 — Buffer & Background</h3>
+            <p><b>☑ Buffer:</b> Text outline for readability. Pick color and size (mm).<br>
+            <b>☐ Background:</b> Rectangle behind label. Pick color and corner radius (mm).</p>
+
+            <h3>Step 7 — Preview</h3>
+            <p>The <b>"Preview"</b> area renders the label on the polygon live.<br>
+            ☑ <b>Satellite BG:</b> Toggle satellite background to check contrast.</p>
+
+            <h3>Step 8 — Apply / Export</h3>
+            <p>🎨 <b>Apply Style:</b> Apply all settings to the QGIS layer instantly.<br>
+            📦 <b>Export MBTiles:</b> Export selected area as .mbtiles file.<br>
+            🔄 <b>Reset:</b> Restore all settings to defaults.<br>
+            💾 <b>Save Config:</b> Save current settings to a JSON file.<br>
+            📂 <b>Load Config:</b> Load settings from a previously saved JSON file.</p>
+            """)
 
         self._update_color_buttons()
         self._update_preview()
 
-        vi = self.lang == 'vi'
-        if vi:
-            self.txt_guide.setHtml("""
-            <h2 style='color:#1B5E20;'>Hướng dẫn sử dụng MBTiles Creator</h2>
-            <h3>1. Chọn lớp & Kiểu dáng</h3>
-            <p>Chọn lớp vector (polygon). Cài đặt màu nét lực, độ rộng nét, màu nền và độ mờ.</p>
-            <h3>2. Nhãn lô (Phân số)</h3>
-            <p><b>Tử số (cột trái):</b> Tick chọn các trường kết hợp. Ví dụ: LO + LDLR → "LO-LDLR"<br>
-            <b>Mẫu số (cột phải):</b> Tick chọn các trường kết hợp. Ví dụ: DTICH<br>
-            <b>Ký tự nối:</b> Ký tự giữa các trường (mặc định "-")<br>
-            <b>Số gạch dưới:</b> Điều chỉnh số ký tự "_" ngăn cách tử/mẫu số<br>
-            <b>Giãn dòng (%):</b> Khoảng cách giữa tử số và mẫu số trên bản đồ (20% = compact, 100% = bình thường)<br>
-            <b>Tỷ lệ:</b> Nhãn chỉ hiển trong khoảng tỷ lệ đã cài đặt</p>
-            <h3>3. Phạm vi & Zoom</h3>
-            <p><b>Vẽ phạm vi:</b> Vẽ hình chữ nhật trên bản đồ để xác định vùng xuất MBTiles<br>
-            <b>Theo phạm vi lớp:</b> Sử dụng extent của lớp đang chọn<br>
-            <b>Zoom:</b> Mức zoom từ 12 (đô thị) đến 18 (chi tiết nhất)</p>
-            <h3>4. Áp dụng</h3>
-            <p>Nhấn <b>"Áp dụng kiểu"</b> để set stroke/fill/label lên layer trực tiếp.<br>
-            Expression tự động tạo — có thể copy vào QGIS Label nếu cần.</p>
-            """)
-        else:
-            self.txt_guide.setHtml("""
-            <h2 style='color:#1B5E20;'>MBTiles Creator Guide</h2>
-            <h3>1. Layer & Style</h3>
-            <p>Select a vector polygon layer. Configure stroke color/width, fill color/opacity.</p>
-            <h3>2. Plot Label (Fraction)</h3>
-            <p><b>Numerator (left):</b> Check fields to combine. Example: LO + LDLR → "LO-LDLR"<br>
-            <b>Denominator (right):</b> Check fields to combine. Example: DTICH<br>
-            <b>Field Sep:</b> Character between fields (default "-")<br>
-            <b>Underline count:</b> Number of "_" characters separating numerator/denominator<br>
-            <b>Line Height (%):</b> Spacing between numerator and denominator on map (20%=compact, 100%=normal)<br>
-            <b>Scale:</b> Labels only visible within the configured scale range</p>
-            <h3>3. Extent & Zoom</h3>
-            <p><b>Draw Extent:</b> Draw a rectangle on the map to define MBTiles area<br>
-            <b>Use Layer Extent:</b> Use the selected layer's bounding box<br>
-            <b>Zoom:</b> From 12 (urban) to 18 (maximum detail)</p>
-            <h3>4. Apply</h3>
-            <p>Click <b>"Apply Style"</b> to set stroke/fill/label on the layer directly.<br>
-            Expression is auto-generated — copy to QGIS Label if needed.</p>
-            """)
+    # ---- Reset / Save / Load Config ----
+    def _reset_defaults(self):
+        """Restore all controls to factory defaults."""
+        self._stroke_color = QColor("#55ff00")
+        self._fill_color = QColor("#ffff00")
+        self._font_color = QColor("#00ffff")
+        self._buf_color = QColor("#ffffff")
+        self._bg_color = QColor("#ffaa00")
+        self.spn_stroke_w.setValue(0.5)
+        self.spn_fill_op.setValue(5)
+        self.cbo_font.setCurrentFont(QFont("Arial"))
+        self.spn_fsize.setValue(10)
+        self.chk_bold.setChecked(False)
+        self.spn_line_h.setValue(20)
+        self.spn_uline.setValue(8)
+        self.spn_spacing.setValue(5)
+        self.edt_num_sep.setText("-")
+        self.edt_den_sep.setText("-")
+        self.edt_num_sfx.setText("")
+        self.edt_den_sfx.setText("")
+        self.cbo_zoom_in.setCurrentIndex(_SCALES.index(1000))
+        self.cbo_zoom_out.setCurrentIndex(_SCALES.index(7500))
+        self.chk_buffer.setChecked(True)
+        self.spn_buf_size.setValue(2.0)
+        self.chk_bg.setChecked(False)
+        self.spn_bg_radius.setValue(2.0)
+        self._update_color_buttons()
+        self._update_preview()
+        QMessageBox.information(self, "LVT4U",
+            "Đã khôi phục mặc định." if self.lang == 'vi' else "Defaults restored.")
+
+    def _save_config(self):
+        """Save current settings to a JSON file."""
+        import json
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save Config", "", "JSON (*.json)")
+        if not path:
+            return
+        cfg = {
+            "stroke_color": self._stroke_color.name(),
+            "fill_color": self._fill_color.name(),
+            "font_color": self._font_color.name(),
+            "buf_color": self._buf_color.name(),
+            "bg_color": self._bg_color.name(),
+            "stroke_width": self.spn_stroke_w.value(),
+            "fill_opacity": self.spn_fill_op.value(),
+            "font": self.cbo_font.currentFont().family(),
+            "font_size": self.spn_fsize.value(),
+            "bold": self.chk_bold.isChecked(),
+            "line_height": self.spn_line_h.value(),
+            "underline_count": self.spn_uline.value(),
+            "spacing_lines": self.spn_spacing.value(),
+            "num_sep": self.edt_num_sep.text(),
+            "den_sep": self.edt_den_sep.text(),
+            "num_suffix": self.edt_num_sfx.text(),
+            "den_suffix": self.edt_den_sfx.text(),
+            "zoom_in": self.cbo_zoom_in.currentData(),
+            "zoom_out": self.cbo_zoom_out.currentData(),
+            "buffer_on": self.chk_buffer.isChecked(),
+            "buffer_size": self.spn_buf_size.value(),
+            "bg_on": self.chk_bg.isChecked(),
+            "bg_radius": self.spn_bg_radius.value(),
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f, indent=2, ensure_ascii=False)
+        QMessageBox.information(self, "LVT4U",
+            f"Đã lưu: {path}" if self.lang == 'vi' else f"Saved: {path}")
+
+    def _load_config(self):
+        """Load settings from a JSON file."""
+        import json
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Load Config", "", "JSON (*.json)")
+        if not path:
+            return
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+        except Exception as e:
+            QMessageBox.warning(self, "LVT4U", str(e))
+            return
+        self._stroke_color = QColor(cfg.get("stroke_color", "#55ff00"))
+        self._fill_color = QColor(cfg.get("fill_color", "#ffff00"))
+        self._font_color = QColor(cfg.get("font_color", "#00ffff"))
+        self._buf_color = QColor(cfg.get("buf_color", "#ffffff"))
+        self._bg_color = QColor(cfg.get("bg_color", "#ffaa00"))
+        self.spn_stroke_w.setValue(cfg.get("stroke_width", 0.5))
+        self.spn_fill_op.setValue(cfg.get("fill_opacity", 5))
+        self.cbo_font.setCurrentFont(QFont(cfg.get("font", "Arial")))
+        self.spn_fsize.setValue(cfg.get("font_size", 10))
+        self.chk_bold.setChecked(cfg.get("bold", False))
+        self.spn_line_h.setValue(cfg.get("line_height", 20))
+        self.spn_uline.setValue(cfg.get("underline_count", 8))
+        self.spn_spacing.setValue(cfg.get("spacing_lines", 5))
+        self.edt_num_sep.setText(cfg.get("num_sep", "-"))
+        self.edt_den_sep.setText(cfg.get("den_sep", "-"))
+        self.edt_num_sfx.setText(cfg.get("num_suffix", ""))
+        self.edt_den_sfx.setText(cfg.get("den_suffix", ""))
+        zi = cfg.get("zoom_in", 1000)
+        zo = cfg.get("zoom_out", 7500)
+        if zi in _SCALES:
+            self.cbo_zoom_in.setCurrentIndex(_SCALES.index(zi))
+        if zo in _SCALES:
+            self.cbo_zoom_out.setCurrentIndex(_SCALES.index(zo))
+        self.chk_buffer.setChecked(cfg.get("buffer_on", True))
+        self.spn_buf_size.setValue(cfg.get("buffer_size", 2.0))
+        self.chk_bg.setChecked(cfg.get("bg_on", False))
+        self.spn_bg_radius.setValue(cfg.get("bg_radius", 2.0))
+        self._update_color_buttons()
+        self._update_preview()
+        QMessageBox.information(self, "LVT4U",
+            f"Đã tải: {path}" if self.lang == 'vi' else f"Loaded: {path}")
 
     # ---- Apply ----
     def _apply_to_layer(self):
