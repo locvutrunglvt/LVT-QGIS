@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """LVT4U MBTiles Module — Vector Tile Creator Dialog."""
-from qgis.PyQt.QtCore import Qt, QSize
+from qgis.PyQt.QtCore import Qt, QSize, QSizeF
 from qgis.PyQt.QtGui import QColor, QFont, QPainter, QPixmap, QPen, QBrush
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget,
@@ -49,6 +49,8 @@ class MBTilesDialog(QDialog):
         self._stroke_color = QColor("#FF0000")
         self._fill_color = QColor("#FFFF00")
         self._font_color = QColor("#000000")
+        self._buf_color = QColor("#FFFFFF")
+        self._bg_color = QColor("#FFFFCC")
         self._num_checks = {}
         self._den_checks = {}
         self._num_order = []   # tracks selection sequence
@@ -313,6 +315,48 @@ class MBTilesDialog(QDialog):
         fg.addWidget(self.lbl_zoom_out, 3, 2)
         fg.addWidget(self.cbo_zoom_out, 3, 3)
 
+        # Buffer (label outline)
+        self.chk_buffer = QCheckBox()
+        self.chk_buffer.setChecked(True)
+        fg.addWidget(self.chk_buffer, 4, 0)
+
+        self.lbl_buf_color = QLabel()
+        self.btn_buf_color = QPushButton()
+        self.btn_buf_color.setFixedSize(70, 22)
+        self.btn_buf_color.clicked.connect(lambda: self._pick_color("buffer"))
+        fg.addWidget(self.lbl_buf_color, 4, 1)
+        fg.addWidget(self.btn_buf_color, 4, 2)
+
+        self.lbl_buf_size = QLabel()
+        self.spn_buf_size = QDoubleSpinBox()
+        self.spn_buf_size.setRange(0.1, 10.0)
+        self.spn_buf_size.setValue(1.0)
+        self.spn_buf_size.setSingleStep(0.5)
+        self.spn_buf_size.setSuffix(" mm")
+        fg.addWidget(self.lbl_buf_size, 4, 3)
+        fg.addWidget(self.spn_buf_size, 4, 4)
+
+        # Background (label background shape)
+        self.chk_bg = QCheckBox()
+        self.chk_bg.setChecked(False)
+        fg.addWidget(self.chk_bg, 5, 0)
+
+        self.lbl_bg_color = QLabel()
+        self.btn_bg_color = QPushButton()
+        self.btn_bg_color.setFixedSize(70, 22)
+        self.btn_bg_color.clicked.connect(lambda: self._pick_color("bg"))
+        fg.addWidget(self.lbl_bg_color, 5, 1)
+        fg.addWidget(self.btn_bg_color, 5, 2)
+
+        self.lbl_bg_radius = QLabel()
+        self.spn_bg_radius = QDoubleSpinBox()
+        self.spn_bg_radius.setRange(0, 20.0)
+        self.spn_bg_radius.setValue(2.0)
+        self.spn_bg_radius.setSingleStep(0.5)
+        self.spn_bg_radius.setSuffix(" mm")
+        fg.addWidget(self.lbl_bg_radius, 5, 3)
+        fg.addWidget(self.spn_bg_radius, 5, 4)
+
         lbl_ly.addLayout(fg)
 
         # Unified Preview: polygon + label in one view
@@ -414,7 +458,8 @@ class MBTilesDialog(QDialog):
     # ---- Color ----
     def _pick_color(self, target):
         cur = {"stroke": self._stroke_color, "fill": self._fill_color,
-               "font": self._font_color}[target]
+               "font": self._font_color, "buffer": self._buf_color,
+               "bg": self._bg_color}[target]
         c = QColorDialog.getColor(cur, self)
         if c.isValid():
             setattr(self, f"_{target}_color", c)
@@ -424,7 +469,9 @@ class MBTilesDialog(QDialog):
     def _update_color_buttons(self):
         for btn, c in [(self.btn_stroke_color, self._stroke_color),
                        (self.btn_fill_color, self._fill_color),
-                       (self.btn_font_color, self._font_color)]:
+                       (self.btn_font_color, self._font_color),
+                       (self.btn_buf_color, self._buf_color),
+                       (self.btn_bg_color, self._bg_color)]:
             btn.setStyleSheet(
                 f"background-color:{c.name()};border:1px solid #888;"
                 f"border-radius:3px;"
@@ -658,6 +705,20 @@ class MBTilesDialog(QDialog):
             self.lbl_zoom_in.setText("🔍+ Near:")
             self.lbl_zoom_out.setText("🔍− Far:")
         self.lbl_preview_l.setText(self._t("Preview:"))
+        if self.lang == 'vi':
+            self.chk_buffer.setText("Viền chữ")
+            self.lbl_buf_color.setText("Màu:")
+            self.lbl_buf_size.setText("Dày:")
+            self.chk_bg.setText("Nền chữ")
+            self.lbl_bg_color.setText("Màu:")
+            self.lbl_bg_radius.setText("Bo góc:")
+        else:
+            self.chk_buffer.setText("Buffer")
+            self.lbl_buf_color.setText("Color:")
+            self.lbl_buf_size.setText("Size:")
+            self.chk_bg.setText("Background")
+            self.lbl_bg_color.setText("Color:")
+            self.lbl_bg_radius.setText("Radius:")
         self.chk_sat_bg.setText(
             "🛰️ Nền vệ tinh" if self.lang == 'vi' else "🛰️ Satellite BG"
         )
@@ -782,10 +843,23 @@ class MBTilesDialog(QDialog):
                         fmt.setLineHeight(lh_pct)
 
                 buf = QgsTextBufferSettings()
-                buf.setEnabled(True)
-                buf.setSize(1)
-                buf.setColor(QColor(255, 255, 255))
+                buf.setEnabled(self.chk_buffer.isChecked())
+                buf.setSize(self.spn_buf_size.value())
+                buf.setColor(self._buf_color)
                 fmt.setBuffer(buf)
+
+                # Label Background
+                if self.chk_bg.isChecked():
+                    from qgis.core import QgsTextBackgroundSettings
+                    bg = QgsTextBackgroundSettings()
+                    bg.setEnabled(True)
+                    bg.setType(QgsTextBackgroundSettings.ShapeRectangle)
+                    bg.setSizeType(QgsTextBackgroundSettings.SizeBuffer)
+                    bg.setSize(QSizeF(1, 0.5))
+                    bg.setFillColor(self._bg_color)
+                    r = self.spn_bg_radius.value()
+                    bg.setRadii(QSizeF(r, r))
+                    fmt.setBackground(bg)
 
                 s.setFormat(fmt)
                 layer.setLabeling(QgsVectorLayerSimpleLabeling(s))
