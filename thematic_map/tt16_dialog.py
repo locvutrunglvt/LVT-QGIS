@@ -22,9 +22,9 @@ from qgis.PyQt.QtWidgets import (
     QComboBox, QGroupBox, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QAbstractItemView, QFrame,
     QTabWidget, QWidget, QTextBrowser, QRadioButton,
-    QButtonGroup,
+    QButtonGroup, QDoubleSpinBox, QCheckBox, QGridLayout,
 )
-from qgis.core import QgsVectorLayer, QgsWkbTypes
+from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsSymbol, QgsSimpleFillSymbolLayer
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
 
 from ..shared.i18n import tr, current_language
@@ -318,6 +318,59 @@ class TT16Dialog(QDialog):
         except Exception as e:
             self._label_dlg = None
             ly.addWidget(QLabel(f"Plot Labels: {e}"))
+
+        # ---- Border / Outline Settings ----
+        grp_border = QGroupBox("✏️  Nét viền lô / Plot Border")
+        grp_border.setStyleSheet(
+            "QGroupBox{font-weight:bold;color:#37474f;border:1px solid #90a4ae;"
+            "border-radius:4px;margin-top:6px;padding-top:14px;}"
+            "QGroupBox::title{subcontrol-origin:margin;left:10px;padding:0 6px;}"
+        )
+        gb_ly = QGridLayout(grp_border)
+        gb_ly.setSpacing(6)
+
+        # Enable checkbox
+        self.chk_border = QCheckBox("Bật viền / Enable border")
+        self.chk_border.setChecked(True)
+        gb_ly.addWidget(self.chk_border, 0, 0, 1, 2)
+
+        # Line style
+        gb_ly.addWidget(QLabel("Kiểu nét / Style:"), 1, 0)
+        self.cmb_line_style = QComboBox()
+        self.cmb_line_style.addItems([
+            "─── Nét liền / Solid",
+            "- - - Nét đứt / Dash",
+            "· · · Nét chấm / Dot",
+            "-·-·- Gạch chấm / Dash-Dot",
+            "-··-·· Gạch 2 chấm / Dash-Dot-Dot",
+        ])
+        gb_ly.addWidget(self.cmb_line_style, 1, 1)
+
+        # Line width
+        gb_ly.addWidget(QLabel("Độ rộng / Width:"), 2, 0)
+        self.spn_line_width = QDoubleSpinBox()
+        self.spn_line_width.setRange(0.0, 5.0)
+        self.spn_line_width.setSingleStep(0.1)
+        self.spn_line_width.setValue(0.3)
+        self.spn_line_width.setSuffix(" mm")
+        gb_ly.addWidget(self.spn_line_width, 2, 1)
+
+        # Line color
+        gb_ly.addWidget(QLabel("Màu nét / Color:"), 3, 0)
+        self.cmb_line_color = QComboBox()
+        self.cmb_line_color.addItems([
+            "⬛ Đen / Black",
+            "🔴 Đỏ / Red",
+            "⬜ Trắng / White",
+            "🟤 Nâu đậm / Dark Brown",
+            "🔵 Xanh dương / Blue",
+            "🟢 Xanh lá / Green",
+            "🟡 Vàng / Yellow",
+            "⚫ Xám đậm / Dark Gray",
+        ])
+        gb_ly.addWidget(self.cmb_line_color, 3, 1)
+
+        ly.addWidget(grp_border)
 
         # Bottom action bar
         btn_row = QHBoxLayout()
@@ -877,6 +930,11 @@ class TT16Dialog(QDialog):
             _log("WARNING: 0 matches — keeping all categories")
 
         # ----------------------------------------------------------
+        # Step 3b: Apply border/outline to all categories
+        # ----------------------------------------------------------
+        self._apply_border_to_renderer(layer, _log)
+
+        # ----------------------------------------------------------
         # Step 4: Force complete refresh (aggressive)
         # ----------------------------------------------------------
         layer.emitStyleChanged()
@@ -895,11 +953,14 @@ class TT16Dialog(QDialog):
         self.iface.mapCanvas().refresh()
 
         std_tag = "TT16/2023" if style.get("standard") == "new" else "TCVN-11565"
+        border_info = ""
+        if self.chk_border.isChecked():
+            border_info = f" | Border: {self.spn_line_width.value()}mm"
         self.iface.messageBar().pushSuccess(
             "LVT4U",
             f"✅ [{std_tag}] {_style_label(style)} → {layer.name()} "
-            f"[{field_name}] — {len(new_cats)}/{total} categories  "
-            f"(QML: {style['qml']})"
+            f"[{field_name}] — {len(new_cats)}/{total} categories"
+            f"{border_info}  (QML: {style['qml']})"
         )
 
     @staticmethod
@@ -924,6 +985,67 @@ class TT16Dialog(QDialog):
             return str(f)
         except (ValueError, TypeError):
             return s
+
+    # -----------------------------------------------------------------
+    # Border / Outline application
+    # -----------------------------------------------------------------
+    _PEN_STYLES = {
+        0: Qt.SolidLine,
+        1: Qt.DashLine,
+        2: Qt.DotLine,
+        3: Qt.DashDotLine,
+        4: Qt.DashDotDotLine,
+    }
+    _LINE_COLORS = {
+        0: QColor(0, 0, 0),         # Black
+        1: QColor(200, 0, 0),       # Red
+        2: QColor(255, 255, 255),   # White
+        3: QColor(80, 40, 10),      # Dark Brown
+        4: QColor(0, 0, 180),       # Blue
+        5: QColor(0, 128, 0),       # Green
+        6: QColor(200, 200, 0),     # Yellow
+        7: QColor(80, 80, 80),      # Dark Gray
+    }
+
+    def _apply_border_to_renderer(self, layer, _log=None):
+        """Apply border/outline settings to all categories in renderer."""
+        if not self.chk_border.isChecked():
+            if _log:
+                _log("Border: disabled — no outline applied")
+            return
+
+        renderer = layer.renderer()
+        if not renderer:
+            return
+
+        width = self.spn_line_width.value()
+        pen_idx = self.cmb_line_style.currentIndex()
+        color_idx = self.cmb_line_color.currentIndex()
+        pen_style = self._PEN_STYLES.get(pen_idx, Qt.SolidLine)
+        stroke_color = self._LINE_COLORS.get(color_idx, QColor(0, 0, 0))
+
+        if _log:
+            _log(f"Border: width={width}mm, pen={pen_idx}, color={color_idx}")
+
+        from qgis.core import QgsCategorizedSymbolRenderer
+        if not isinstance(renderer, QgsCategorizedSymbolRenderer):
+            return
+
+        count = 0
+        for cat in renderer.categories():
+            symbol = cat.symbol()
+            if symbol is None:
+                continue
+            for i in range(symbol.symbolLayerCount()):
+                sl = symbol.symbolLayer(i)
+                if isinstance(sl, QgsSimpleFillSymbolLayer):
+                    sl.setStrokeColor(stroke_color)
+                    sl.setStrokeWidth(width)
+                    sl.setStrokeStyle(pen_style)
+                    count += 1
+
+        if _log:
+            _log(f"Border applied to {count} symbol layers")
 
     # -----------------------------------------------------------------
     def refresh_layers(self):
