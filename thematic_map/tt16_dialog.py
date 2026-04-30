@@ -182,48 +182,44 @@ class TT16Dialog(QDialog):
 
         ly.addLayout(top)
 
-        # Buttons
+        ly.addStretch()
+
+        # Bottom action bar — all buttons in one row
         btn_row = QHBoxLayout()
-        self.btn_apply = QPushButton("🎨  Apply Style")
+
+        self.btn_apply = QPushButton("🎨  " + tr("Apply Style"))
         self.btn_apply.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        self.btn_apply.setMinimumHeight(36)
-        self.btn_apply.setFixedWidth(160)
+        self.btn_apply.setMinimumHeight(40)
         self.btn_apply.setStyleSheet(
             "QPushButton{background:#1565c0;color:white;border-radius:5px;"
-            "padding:6px 16px;}"
+            "padding:6px 20px;}"
             "QPushButton:hover{background:#1976d2;}"
         )
         self.btn_apply.clicked.connect(self._on_apply_clicked)
-        btn_row.addWidget(self.btn_apply)
+        btn_row.addWidget(self.btn_apply, 2)
+
+        self.btn_labels = QPushButton("🏷️  " + tr("Plot Labels"))
+        self.btn_labels.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        self.btn_labels.setMinimumHeight(40)
+        self.btn_labels.setStyleSheet(
+            "QPushButton{background:#2e7d32;color:white;border-radius:5px;"
+            "padding:6px 20px;}"
+            "QPushButton:hover{background:#388e3c;}"
+        )
+        self.btn_labels.clicked.connect(self._open_plot_labels)
+        btn_row.addWidget(self.btn_labels, 2)
 
         btn_close = QPushButton(tr("Close"))
-        btn_close.setMinimumHeight(36)
-        btn_close.setFixedWidth(80)
+        btn_close.setMinimumHeight(40)
+        btn_close.setStyleSheet(
+            "QPushButton{background:#757575;color:white;border-radius:5px;"
+            "padding:6px 20px;}"
+            "QPushButton:hover{background:#616161;}"
+        )
         btn_close.clicked.connect(self.close)
-        btn_row.addWidget(btn_close)
-        btn_row.addStretch()
+        btn_row.addWidget(btn_close, 1)
+
         ly.addLayout(btn_row)
-
-        # Separator
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setStyleSheet("color:#ccc;")
-        ly.addWidget(line)
-
-        # Plot Labels section header
-        lbl_labels = QLabel("🏷️  " + tr("Plot Labels"))
-        lbl_labels.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        lbl_labels.setStyleSheet("color:#2e7d32; padding:2px 0;")
-        ly.addWidget(lbl_labels)
-
-        # Embed Plot Labels dialog as widget
-        try:
-            from .plot_labels import PlotLabelsDialog
-            self._label_dlg = PlotLabelsDialog(self.iface, parent)
-            self._label_dlg.setWindowFlags(Qt.Widget)
-            ly.addWidget(self._label_dlg, 1)
-        except Exception as e:
-            ly.addWidget(QLabel(f"Plot Labels: {e}"))
 
     def _build_ref_tab(self, parent):
         ly = QVBoxLayout(parent)
@@ -308,6 +304,20 @@ class TT16Dialog(QDialog):
         """Update table header label when style changes (ref tab is static)."""
         # Ref tab is always bilingual — no need to rebuild
         pass
+
+    # -----------------------------------------------------------------
+    # Plot Labels launcher
+    # -----------------------------------------------------------------
+    def _open_plot_labels(self):
+        """Open Plot Labels as a separate popup dialog."""
+        if not hasattr(self, '_label_dlg') or self._label_dlg is None:
+            from .plot_labels import PlotLabelsDialog
+            self._label_dlg = PlotLabelsDialog(self.iface)
+        dlg = self._label_dlg
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     # -----------------------------------------------------------------
     # Events
