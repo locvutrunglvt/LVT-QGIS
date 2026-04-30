@@ -338,9 +338,17 @@ class TT16Dialog(QDialog):
         """Fill style combo based on selected standard (Old/New)."""
         self.cmb_style.blockSignals(True)
         self.cmb_style.clear()
-        styles = _STYLES_NEW if self.rb_new.isChecked() else _STYLES_OLD
+        is_new = self.rb_new.isChecked()
+        styles = _STYLES_NEW if is_new else _STYLES_OLD
+        prefix = "🆕 " if is_new else "📗 "
         for s in styles:
-            self.cmb_style.addItem(_style_label(s), s)
+            label = prefix + _style_label(s)
+            self.cmb_style.addItem(label, s)
+            # Add tooltip showing QML file
+            idx = self.cmb_style.count() - 1
+            self.cmb_style.setItemData(
+                idx, f"QML: {s['qml']}", Qt.ToolTipRole
+            )
         self.cmb_style.blockSignals(False)
 
     def _on_standard_changed(self, btn_id):
@@ -643,7 +651,12 @@ class TT16Dialog(QDialog):
 
         attr = style["classify_attr"]
         vtype = "mã số" if style["value_type"] == "numeric" else "mã chữ"
-        self.lbl_style_info.setText(f"QML field: \"{attr}\" ({vtype})")
+        qml_name = style["qml"]
+        std = style.get("standard", "new")
+        std_label = "🆕 TT16" if std == "new" else "📗 TCVN"
+        self.lbl_style_info.setText(
+            f'QML field: "{attr}" ({vtype})  |  {std_label}  →  {qml_name}'
+        )
 
         # Update table to match style
         self._populate_table(style)
@@ -826,10 +839,12 @@ class TT16Dialog(QDialog):
 
         self.iface.mapCanvas().refresh()
 
+        std_tag = "TT16/2023" if style.get("standard") == "new" else "TCVN-11565"
         self.iface.messageBar().pushSuccess(
             "LVT4U",
-            f"✅ [{self._BUILD}] {_style_label(style)} → {layer.name()} "
-            f"[{field_name}] — {len(new_cats)}/{total} categories"
+            f"✅ [{std_tag}] {_style_label(style)} → {layer.name()} "
+            f"[{field_name}] — {len(new_cats)}/{total} categories  "
+            f"(QML: {style['qml']})"
         )
 
     @staticmethod
