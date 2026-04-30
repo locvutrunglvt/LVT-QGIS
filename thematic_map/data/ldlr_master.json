@@ -1,883 +1,655 @@
 {
-  "version": "1.0",
-  "standard": "TT16/2023-BNNPTNT",
-  "description": "Vietnam forest land type classification (LDLR) colour codes",
   "codes": [
     {
-      "id": 1,
-      "code": "TXG1",
-      "code_lower": "txg1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX giàu nguyên sinh",
+      "text_code": "TXG1",
+      "num_code": "1",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX giàu nguyên sinh",
       "name_en": "Rich primary evergreen broadleaved forest on soil mountain",
-      "hex": "#00D000",
-      "rgb": "0,208,0"
+      "hex": "#00D000"
     },
     {
-      "id": 2,
-      "code": "TXB1",
-      "code_lower": "txb1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX TB nguyên sinh",
-      "name_en": "Medium primary evergreen broadleaved forest on soil mountain",
-      "hex": "#00FF00",
-      "rgb": "0,255,0"
-    },
-    {
-      "id": 3,
-      "code": "RLG1",
-      "code_lower": "rlg1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL giàu nguyên sinh",
-      "name_en": "Rich primary deciduous forest on soil mountain",
-      "hex": "#A0A000",
-      "rgb": "160,160,0"
-    },
-    {
-      "id": 4,
-      "code": "RLB1",
-      "code_lower": "rlb1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL TB nguyên sinh",
-      "name_en": "Medium primary deciduous forest on soil mountain",
-      "hex": "#C0C000",
-      "rgb": "192,192,0"
-    },
-    {
-      "id": 5,
-      "code": "LKG1",
-      "code_lower": "lkg1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK giàu nguyên sinh",
-      "name_en": "Rich primary coniferous forest on soil mountain",
-      "hex": "#FF505A",
-      "rgb": "255,80,90"
-    },
-    {
-      "id": 6,
-      "code": "LKB1",
-      "code_lower": "lkb1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK TB nguyên sinh",
-      "name_en": "Medium primary coniferous forest on soil mountain",
-      "hex": "#FF6982",
-      "rgb": "255,105,130"
-    },
-    {
-      "id": 7,
-      "code": "RKG1",
-      "code_lower": "rkg1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK giàu nguyên sinh",
-      "name_en": "Rich primary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
-    },
-    {
-      "id": 8,
-      "code": "RKB1",
-      "code_lower": "rkb1",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK TB nguyên sinh",
-      "name_en": "Medium primary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
-    },
-    {
-      "id": 9,
-      "code": "TXDG1",
-      "code_lower": "txdg1",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX giàu nguyên sinh",
-      "name_en": "Rich primary evergreen broadleaved forest on rocky mountain",
-      "hex": "#00D068",
-      "rgb": "0,208,104"
-    },
-    {
-      "id": 10,
-      "code": "TXDB1",
-      "code_lower": "txdb1",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX TB nguyên sinh",
+      "text_code": "TXDB1",
+      "num_code": "10",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX TB nguyên sinh",
       "name_en": "Medium primary evergreen broadleaved forest on rocky mountain",
-      "hex": "#00FF80",
-      "rgb": "0,255,128"
+      "hex": "#00FF80"
     },
     {
-      "id": 11,
-      "code": "RNM1",
-      "code_lower": "rnm1",
-      "name_vn": "Rừng gỗ tự nhiên ngập mặn nguyên sinh",
+      "text_code": "RNM1",
+      "num_code": "11",
+      "name_vi": "Rừng gỗ tự nhiên ngập mặn nguyên sinh",
       "name_en": "Primary forest on saline wetland",
-      "hex": "#7070FF",
-      "rgb": "112,112,255"
+      "hex": "#7070FF"
     },
     {
-      "id": 12,
-      "code": "RNP1",
-      "code_lower": "rnp1",
-      "name_vn": "Rừng gỗ tự nhiên ngập phèn nguyên sinh",
+      "text_code": "RNP1",
+      "num_code": "12",
+      "name_vi": "Rừng gỗ tự nhiên ngập phèn nguyên sinh",
       "name_en": "Primary forest on alkaline wetland",
-      "hex": "#E8D0FF",
-      "rgb": "232,208,255"
+      "hex": "#A850FF"
     },
     {
-      "id": 13,
-      "code": "RNP1",
-      "code_lower": "rnp1",
-      "name_vn": "Rừng gỗ tự nhiên ngập ngọt nguyên sinh",
+      "text_code": "RNN1",
+      "num_code": "13",
+      "name_vi": "Rừng gỗ tự nhiên ngập ngọt nguyên sinh",
       "name_en": "Primary forest on freshwater wetland",
-      "hex": "#E8D0FF",
-      "rgb": "232,208,255"
+      "hex": "#E8D0FF"
     },
     {
-      "id": 14,
-      "code": "TXG",
-      "code_lower": "txg",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX giàu",
+      "text_code": "TXG",
+      "num_code": "14",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX giàu",
       "name_en": "Rich secondary evergreen broadleaved forest on soil mountain",
-      "hex": "#00D000",
-      "rgb": "0,208,0"
+      "hex": "#00D000"
     },
     {
-      "id": 15,
-      "code": "TXB",
-      "code_lower": "txb",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX TB",
+      "text_code": "TXB",
+      "num_code": "15",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX TB",
       "name_en": "Medium secondary evergreen broadleaved forest on soil mountain",
-      "hex": "#00FF00",
-      "rgb": "0,255,0"
+      "hex": "#00FF00"
     },
     {
-      "id": 16,
-      "code": "TXN",
-      "code_lower": "txn",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX nghèo",
+      "text_code": "TXN",
+      "num_code": "16",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX nghèo",
       "name_en": "Poor secondary evergreen broadleaved forest on soil mountain",
-      "hex": "#90FF90",
-      "rgb": "144,255,144"
+      "hex": "#90FF90"
     },
     {
-      "id": 17,
-      "code": "TXK",
-      "code_lower": "txk",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX nghèo kiệt",
+      "text_code": "TXK",
+      "num_code": "17",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX nghèo kiệt",
       "name_en": "Very poor secondary evergreen broadleaved forest on soil mountain",
-      "hex": "#B0FFB0",
-      "rgb": "176,255,176"
+      "hex": "#B0FFB0"
     },
     {
-      "id": 18,
-      "code": "TXP",
-      "code_lower": "txp",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRTX phục hồi",
+      "text_code": "TXP",
+      "num_code": "18",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX phục hồi",
       "name_en": "Rehabilitation secondary evergreen broadleaved forest on soil mountain",
-      "hex": "#B3FF40",
-      "rgb": "179,255,64"
+      "hex": "#B3FF40"
     },
     {
-      "id": 19,
-      "code": "RLG",
-      "code_lower": "rlg",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL giàu",
+      "text_code": "RLG",
+      "num_code": "19",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL giàu",
       "name_en": "Rich secondary deciduous forest on soil mountain",
-      "hex": "#A0A000",
-      "rgb": "160,160,0"
+      "hex": "#A0A000"
     },
     {
-      "id": 20,
-      "code": "RLB",
-      "code_lower": "rlb",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL TB",
+      "text_code": "TXB1",
+      "num_code": "2",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRTX TB nguyên sinh",
+      "name_en": "Medium primary evergreen broadleaved forest on soil mountain",
+      "hex": "#00FF00"
+    },
+    {
+      "text_code": "RLB",
+      "num_code": "20",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL TB",
       "name_en": "Medium secondary deciduous forest on soil mountain",
-      "hex": "#C0C000",
-      "rgb": "192,192,0"
+      "hex": "#C0C000"
     },
     {
-      "id": 21,
-      "code": "RLN",
-      "code_lower": "rln",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL nghèo",
+      "text_code": "RLN",
+      "num_code": "21",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL nghèo",
       "name_en": "Poor secondary deciduous forest on soil mountain",
-      "hex": "#E0E000",
-      "rgb": "224,224,0"
+      "hex": "#E0E000"
     },
     {
-      "id": 22,
-      "code": "RLK",
-      "code_lower": "rlk",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL nghèo kiệt",
+      "text_code": "RLK",
+      "num_code": "22",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL nghèo kiệt",
       "name_en": "Very poor secondary deciduous forest on soil mountain",
-      "hex": "#F0F000",
-      "rgb": "240,240,0"
+      "hex": "#EBFF00"
     },
     {
-      "id": 23,
-      "code": "RLP",
-      "code_lower": "rlp",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRRL phục hồi",
+      "text_code": "RLP",
+      "num_code": "23",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL phục hồi",
       "name_en": "Rehabilitation secondary deciduous forest on soil mountain",
-      "hex": "#EBFF00",
-      "rgb": "235,255,0"
+      "hex": "#EBFF00"
     },
     {
-      "id": 24,
-      "code": "LKG",
-      "code_lower": "lkg",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK giàu",
+      "text_code": "LKG",
+      "num_code": "24",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK giàu",
       "name_en": "Rich secondary coniferous forest on soil mountain",
-      "hex": "#FF505A",
-      "rgb": "255,80,90"
+      "hex": "#FF505A"
     },
     {
-      "id": 25,
-      "code": "LKB",
-      "code_lower": "lkb",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK TB",
+      "text_code": "LKB",
+      "num_code": "25",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK TB",
       "name_en": "Medium secondary coniferous forest on soil mountain",
-      "hex": "#FF6982",
-      "rgb": "255,105,130"
+      "hex": "#FF6982"
     },
     {
-      "id": 26,
-      "code": "LKN",
-      "code_lower": "lkn",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK nghèo",
+      "text_code": "LKN",
+      "num_code": "26",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK nghèo",
       "name_en": "Poor secondary coniferous forest on soil mountain",
-      "hex": "#FF8690",
-      "rgb": "255,134,144"
+      "hex": "#FF8690"
     },
     {
-      "id": 27,
-      "code": "LKK",
-      "code_lower": "lkk",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK nghèo kiệt",
+      "text_code": "LKK",
+      "num_code": "27",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK nghèo kiệt",
       "name_en": "Very poor secondary coniferous forest on soil mountain",
-      "hex": "#FF9A90",
-      "rgb": "255,154,144"
+      "hex": "#FF9A90"
     },
     {
-      "id": 28,
-      "code": "LKP",
-      "code_lower": "lkp",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LK phục hồi",
+      "text_code": "LKP",
+      "num_code": "28",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK phục hồi",
       "name_en": "Rehabilitation secondary coniferous forest on soil mountain",
-      "hex": "#FFB0B0",
-      "rgb": "255,176,176"
+      "hex": "#FFB0B0"
     },
     {
-      "id": 29,
-      "code": "RKG",
-      "code_lower": "rkg",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK giàu",
+      "text_code": "RKG",
+      "num_code": "29",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK giàu",
       "name_en": "Rich secondary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
+      "hex": "#FFA0D0"
     },
     {
-      "id": 30,
-      "code": "RKB",
-      "code_lower": "rkb",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK TB",
+      "text_code": "RLG1",
+      "num_code": "3",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL giàu nguyên sinh",
+      "name_en": "Rich primary deciduous forest on soil mountain",
+      "hex": "#A0A000"
+    },
+    {
+      "text_code": "RKB",
+      "num_code": "30",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK TB",
       "name_en": "Medium secondary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
+      "hex": "#FFA0D0"
     },
     {
-      "id": 31,
-      "code": "RKN",
-      "code_lower": "rkn",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK nghèo",
+      "text_code": "RKN",
+      "num_code": "31",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK nghèo",
       "name_en": "Poor secondary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
+      "hex": "#FFA0D0"
     },
     {
-      "id": 32,
-      "code": "RKK",
-      "code_lower": "rkk",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK nghèo kiệt",
+      "text_code": "RKK",
+      "num_code": "32",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK nghèo kiệt",
       "name_en": "Very poor secondary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
+      "hex": "#FFA0D0"
     },
     {
-      "id": 33,
-      "code": "RKP",
-      "code_lower": "rkp",
-      "name_vn": "Rừng gỗ tự nhiên núi đất LRLK phục hồi",
+      "text_code": "RKP",
+      "num_code": "33",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK phục hồi",
       "name_en": "Rehabilitation secondary mixed broadleaved and coniferous forest on soil mountain",
-      "hex": "#FFA0D0",
-      "rgb": "255,160,208"
+      "hex": "#FFA0D0"
     },
     {
-      "id": 34,
-      "code": "TXDG",
-      "code_lower": "txdg",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX giàu",
-      "name_en": "Rich secondary evergreen broadleaved forest on rocky mountain",
-      "hex": "#00D068",
-      "rgb": "0,208,104"
-    },
-    {
-      "id": 35,
-      "code": "TXDB",
-      "code_lower": "txdb",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX TB",
-      "name_en": "Medium secondary evergreen broadleaved forest on rocky mountain",
-      "hex": "#00FF80",
-      "rgb": "0,255,128"
-    },
-    {
-      "id": 36,
-      "code": "TXDN",
-      "code_lower": "txdn",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX nghèo",
-      "name_en": "Poor secondary evergreen broadleaved forest on rocky mountain",
-      "hex": "#60FFB0",
-      "rgb": "96,255,176"
-    },
-    {
-      "id": 37,
-      "code": "TXDK",
-      "code_lower": "txdk",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX nghèo kiệt",
+      "text_code": "TXDK",
+      "num_code": "34",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX giàu",
       "name_en": "Very poor secondary evergreen broadleaved forest on rocky mountain",
-      "hex": "#A0FFD0",
-      "rgb": "160,255,208"
+      "hex": "#00D068"
     },
     {
-      "id": 38,
-      "code": "TXDP",
-      "code_lower": "txdp",
-      "name_vn": "Rừng gỗ tự nhiên núi đá LRTX phục hồi",
+      "text_code": "TXDB",
+      "num_code": "35",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX TB",
+      "name_en": "Medium secondary evergreen broadleaved forest on rocky mountain",
+      "hex": "#00FF80"
+    },
+    {
+      "text_code": "TXDN",
+      "num_code": "36",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX nghèo",
+      "name_en": "Poor secondary evergreen broadleaved forest on rocky mountain",
+      "hex": "#60FFB0"
+    },
+    {
+      "text_code": "TXDK",
+      "num_code": "37",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX nghèo kiệt",
+      "name_en": "Very poor secondary evergreen broadleaved forest on rocky mountain",
+      "hex": "#A0FFD0"
+    },
+    {
+      "text_code": "TXDP",
+      "num_code": "38",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX phục hồi",
       "name_en": "Rehabilitation secondary evergreen broadleaved forest on rocky mountain",
-      "hex": "#D0FFE8",
-      "rgb": "208,255,232"
+      "hex": "#D0FFE8"
     },
     {
-      "id": 39,
-      "code": "RNMG",
-      "code_lower": "rnmg",
-      "name_vn": "Rừng gỗ tự nhiên ngập mặn giàu",
+      "text_code": "RNMG",
+      "num_code": "39",
+      "name_vi": "Rừng gỗ tự nhiên ngập mặn giàu",
       "name_en": "Rich secondary forest on saline wetland",
-      "hex": "#7070FF",
-      "rgb": "112,112,255"
+      "hex": "#7070FF"
     },
     {
-      "id": 40,
-      "code": "RNMB",
-      "code_lower": "rnmb",
-      "name_vn": "Rừng gỗ tự nhiên ngập mặn trung bình",
+      "text_code": "RLB1",
+      "num_code": "4",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRRL TB nguyên sinh",
+      "name_en": "Medium primary coniferous forest on soil mountain",
+      "hex": "#BABA00"
+    },
+    {
+      "text_code": "RNMB",
+      "num_code": "40",
+      "name_vi": "Rừng gỗ tự nhiên ngập mặn trung bình",
       "name_en": "Medium secondary forest on saline wetland",
-      "hex": "#9090FF",
-      "rgb": "144,144,255"
+      "hex": "#9090FF"
     },
     {
-      "id": 41,
-      "code": "RNMN",
-      "code_lower": "rnmn",
-      "name_vn": "Rừng gỗ tự nhiên ngập mặn nghèo",
+      "text_code": "RNMN",
+      "num_code": "41",
+      "name_vi": "Rừng gỗ tự nhiên ngập mặn nghèo",
       "name_en": "Poor secondary forest on saline wetland",
-      "hex": "#C0C0FF",
-      "rgb": "192,192,255"
+      "hex": "#C0C0FF"
     },
     {
-      "id": 42,
-      "code": "RNMP",
-      "code_lower": "rnmp",
-      "name_vn": "Rừng gỗ tự nhiên ngập mặn phục hồi",
+      "text_code": "RNMP",
+      "num_code": "42",
+      "name_vi": "Rừng gỗ tự nhiên ngập mặn phục hồi",
       "name_en": "Rehabilitation secondary forest on saline wetland",
-      "hex": "#D0D0FF",
-      "rgb": "208,208,255"
+      "hex": "#D0D0FF"
     },
     {
-      "id": 43,
-      "code": "RNPG",
-      "code_lower": "rnpg",
-      "name_vn": "Rừng gỗ tự nhiên ngập phèn giàu",
+      "text_code": "RNPG",
+      "num_code": "43",
+      "name_vi": "Rừng gỗ tự nhiên ngập phèn giàu",
       "name_en": "Rich secondary forest on alkaline wetland",
-      "hex": "#A850FF",
-      "rgb": "168,80,255"
+      "hex": "#A850FF"
     },
     {
-      "id": 44,
-      "code": "RNPB",
-      "code_lower": "rnpb",
-      "name_vn": "Rừng gỗ tự nhiên ngập phèn trung bình",
+      "text_code": "RNPB",
+      "num_code": "44",
+      "name_vi": "Rừng gỗ tự nhiên ngập phèn trung bình",
       "name_en": "Medium secondary forest on alkaline wetland",
-      "hex": "#C080FF",
-      "rgb": "192,128,255"
+      "hex": "#C080FF"
     },
     {
-      "id": 45,
-      "code": "RNPN",
-      "code_lower": "rnpn",
-      "name_vn": "Rừng gỗ tự nhiên ngập phèn nghèo",
+      "text_code": "RNPN",
+      "num_code": "45",
+      "name_vi": "Rừng gỗ tự nhiên ngập phèn nghèo",
       "name_en": "Poor secondary forest on alkaline wetland",
-      "hex": "#D0A0FF",
-      "rgb": "208,160,255"
+      "hex": "#D0A0FF"
     },
     {
-      "id": 46,
-      "code": "RNPP",
-      "code_lower": "rnpp",
-      "name_vn": "Rừng gỗ tự nhiên ngập phèn phục hồi",
+      "text_code": "RNPP",
+      "num_code": "46",
+      "name_vi": "Rừng gỗ tự nhiên ngập phèn phục hồi",
       "name_en": "Rehabilitation secondary forest on alkaline wetland",
-      "hex": "#D8B0FF",
-      "rgb": "216,176,255"
+      "hex": "#D8B0FF"
     },
     {
-      "id": 47,
-      "code": "RNN",
-      "code_lower": "rnn",
-      "name_vn": "Rừng gỗ tự nhiên ngập ngọt",
+      "text_code": "RNN",
+      "num_code": "47",
+      "name_vi": "Rừng gỗ tự nhiên ngập ngọt",
       "name_en": "Natural forest on freshwater wetland",
-      "hex": "#E8D0FF",
-      "rgb": "232,208,255"
+      "hex": "#E8D0FF"
     },
     {
-      "id": 48,
-      "code": "TLU",
-      "code_lower": "tlu",
-      "name_vn": "Rừng tre/luồng tự nhiên núi đất",
+      "text_code": "TLU",
+      "num_code": "48",
+      "name_vi": "Rừng tre/luồng tự nhiên núi đất",
       "name_en": "Dendrocalamus bamboo forest on soil mountain",
-      "hex": "#D0E0FF",
-      "rgb": "208,224,255"
+      "hex": "#D0E0FF"
     },
     {
-      "id": 49,
-      "code": "NUA",
-      "code_lower": "nua",
-      "name_vn": "Rừng nứa tự nhiên núi đất",
+      "text_code": "NUA",
+      "num_code": "49",
+      "name_vi": "Rừng nứa tự nhiên núi đất",
       "name_en": "Neohouzeana bamboo forest on soil mountain",
-      "hex": "#D0E0FF",
-      "rgb": "208,224,255"
+      "hex": "#D0E0FF"
     },
     {
-      "id": 50,
-      "code": "VAU",
-      "code_lower": "vau",
-      "name_vn": "Rừng vầu tự nhiên núi đất",
+      "text_code": "LKG1",
+      "num_code": "5",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK giàu nguyên sinh",
+      "name_en": "Rich primary coniferous forest on soil mountain",
+      "hex": "#FF505A"
+    },
+    {
+      "text_code": "VAU",
+      "num_code": "50",
+      "name_vi": "Rừng vầu tự nhiên núi đất",
       "name_en": "Indosasa bamboo forest on soil mountain",
-      "hex": "#D0E0FF",
-      "rgb": "208,224,255"
+      "hex": "#D0E0FF"
     },
     {
-      "id": 51,
-      "code": "LOO",
-      "code_lower": "loo",
-      "name_vn": "Rừng lồ ô tự nhiên núi đất",
+      "text_code": "LOO",
+      "num_code": "51",
+      "name_vi": "Rừng lồ ô tự nhiên núi đất",
       "name_en": "Bambusa bamboo forest on soil mountain",
-      "hex": "#D0E0FF",
-      "rgb": "208,224,255"
+      "hex": "#D0E0FF"
     },
     {
-      "id": 52,
-      "code": "TNK",
-      "code_lower": "tnk",
-      "name_vn": "Rừng tre nứa khác tự nhiên núi đất",
+      "text_code": "TNK",
+      "num_code": "52",
+      "name_vi": "Rừng tre nứa khác tự nhiên núi đất",
       "name_en": "Other bamboo forest on soil mountain",
-      "hex": "#D0E0FF",
-      "rgb": "208,224,255"
+      "hex": "#D0E0FF"
     },
     {
-      "id": 53,
-      "code": "TND",
-      "code_lower": "tnd",
-      "name_vn": "Rừng tre nứa tự nhiên núi đá",
+      "text_code": "TND",
+      "num_code": "53",
+      "name_vi": "Rừng tre nứa tự nhiên núi đá",
       "name_en": "Other bamboo forest on rocky mountain",
-      "hex": "#D0E0FF",
-      "rgb": "208,224,255"
+      "hex": "#D0E0FF"
     },
     {
-      "id": 54,
-      "code": "HG1",
-      "code_lower": "hg1",
-      "name_vn": "Rừng hỗn giao G-TN tự nhiên núi đất ",
+      "text_code": "HG1",
+      "num_code": "54",
+      "name_vi": "Rừng hỗn giao G-TN tự nhiên núi đất ",
       "name_en": "Mixed wood-bamboo forest on soil mountain (mainly wood)",
-      "hex": "#FFD0FF",
-      "rgb": "255,208,255"
+      "hex": "#FFD0FF"
     },
     {
-      "id": 55,
-      "code": "HG2",
-      "code_lower": "hg2",
-      "name_vn": "Rừng hỗn giao TN-G tự nhiên núi đất ",
+      "text_code": "HG2",
+      "num_code": "55",
+      "name_vi": "Rừng hỗn giao TN-G tự nhiên núi đất ",
       "name_en": "Mixed bamboo-wood forest on soil mountain (mainly bamboo)",
-      "hex": "#FFD0FF",
-      "rgb": "255,208,255"
+      "hex": "#FFD0FF"
     },
     {
-      "id": 56,
-      "code": "HGD",
-      "code_lower": "hgd",
-      "name_vn": "Rừng hỗn giao tự nhiên núi đá",
+      "text_code": "HGD",
+      "num_code": "56",
+      "name_vi": "Rừng hỗn giao tự nhiên núi đá",
       "name_en": "Mixed wood-bamboo forest on rocky mountain",
-      "hex": "#FFD0FF",
-      "rgb": "255,208,255"
+      "hex": "#FFD0FF"
     },
     {
-      "id": 57,
-      "code": "CD",
-      "code_lower": "cd",
-      "name_vn": "Rừng cau dừa tự nhiên núi đất",
+      "text_code": "CD",
+      "num_code": "57",
+      "name_vi": "Rừng cau dừa tự nhiên núi đất",
       "name_en": "Palm and coconut tree forest on soil mountain",
-      "hex": "#C0C0FF",
-      "rgb": "192,192,255"
+      "hex": "#C0C0FF"
     },
     {
-      "id": 58,
-      "code": "CDD",
-      "code_lower": "cdd",
-      "name_vn": "Rừng cau dừa tự nhiên núi đá",
+      "text_code": "CDD",
+      "num_code": "58",
+      "name_vi": "Rừng cau dừa tự nhiên núi đá",
       "name_en": "Palm and coconut tree forest on rocky mountain",
-      "hex": "#C0C0FF",
-      "rgb": "192,192,255"
+      "hex": "#C0C0FF"
     },
     {
-      "id": 59,
-      "code": "CDN",
-      "code_lower": "cdn",
-      "name_vn": "Rừng cau dừa tự nhiên ngập nước ngọt",
+      "text_code": "CDN",
+      "num_code": "59",
+      "name_vi": "Rừng cau dừa tự nhiên ngập nước ngọt",
       "name_en": "Palm and coconut tree forest on freshwater wetland",
-      "hex": "#C0C0FF",
-      "rgb": "192,192,255"
+      "hex": "#C0C0FF"
     },
     {
-      "id": 60,
-      "code": "RTG",
-      "code_lower": "rtg",
-      "name_vn": "Rừng gỗ trồng núi đất",
+      "text_code": "LKB1",
+      "num_code": "6",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LK TB nguyên sinh",
+      "name_en": "Medium primary coniferous forest on soil mountain",
+      "hex": "#FF6982"
+    },
+    {
+      "text_code": "RTG",
+      "num_code": "60",
+      "name_vi": "Rừng gỗ trồng núi đất",
       "name_en": "Plantation on soil mountain",
-      "hex": "#FFD8B0",
-      "rgb": "255,216,176"
+      "hex": "#FFD8B0"
     },
     {
-      "id": 61,
-      "code": "RTGD",
-      "code_lower": "rtgd",
-      "name_vn": "Rừng gỗ trồng núi đá",
+      "text_code": "RTGD",
+      "num_code": "61",
+      "name_vi": "Rừng gỗ trồng núi đá",
       "name_en": "Plantation on rocky mountain",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 62,
-      "code": "RTM",
-      "code_lower": "rtm",
-      "name_vn": "Rừng gỗ trồng ngập mặn",
+      "text_code": "RTM",
+      "num_code": "62",
+      "name_vi": "Rừng gỗ trồng ngập mặn",
       "name_en": "Plantation on saline wetland",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 63,
-      "code": "RTP",
-      "code_lower": "rtp",
-      "name_vn": "Rừng gỗ trồng ngập phèn",
+      "text_code": "RTP",
+      "num_code": "63",
+      "name_vi": "Rừng gỗ trồng ngập phèn",
       "name_en": "Plantation on alkaline wetland",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 64,
-      "code": "RTC",
-      "code_lower": "rtc",
-      "name_vn": "Rừng gỗ trồng đất cát",
+      "text_code": "RTC",
+      "num_code": "64",
+      "name_vi": "Rừng gỗ trồng đất cát",
       "name_en": "Plantation on sandy soil",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 65,
-      "code": "RTTN",
-      "code_lower": "rttn",
-      "name_vn": "Rừng tre nứa trồng núi đất",
+      "text_code": "RTTN",
+      "num_code": "65",
+      "name_vi": "Rừng tre nứa trồng núi đất",
       "name_en": "Bamboo plantation on soil mountain",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 66,
-      "code": "RTTND",
-      "code_lower": "rttnd",
-      "name_vn": "Rừng tre nứa trồng núi đá",
+      "text_code": "RTTND",
+      "num_code": "66",
+      "name_vi": "Rừng tre nứa trồng núi đá",
       "name_en": "Bamboo plantation on rocky mountain",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 67,
-      "code": "RTCD",
-      "code_lower": "rtcd",
-      "name_vn": "Rừng cau dừa trồng cạn",
+      "text_code": "RTCD",
+      "num_code": "67",
+      "name_vi": "Rừng cau dừa trồng cạn",
       "name_en": "Palm and coconut tree plantation on soil mountain",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 68,
-      "code": "RTCDN",
-      "code_lower": "rtcdn",
-      "name_vn": "Rừng cau dừa trồng ngập nước",
+      "text_code": "RTCDN",
+      "num_code": "68",
+      "name_vi": "Rừng cau dừa trồng ngập nước",
       "name_en": "Palm and coconut tree plantation on freshwater wetland",
-      "hex": "#FFD8B0",
-      "rgb": "255,216,176"
+      "hex": "#FFD8B0"
     },
     {
-      "id": 69,
-      "code": "RTCDC",
-      "code_lower": "rtcdc",
-      "name_vn": "Rừng cau dừa trồng đất cát",
+      "text_code": "RTCDC",
+      "num_code": "69",
+      "name_vi": "Rừng cau dừa trồng đất cát",
       "name_en": "Palm and coconut tree plantation on sandy soil",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 70,
-      "code": "RTK",
-      "code_lower": "rtk",
-      "name_vn": "Rừng trồng khác núi đất",
+      "text_code": "RKG1",
+      "num_code": "7",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK giàu nguyên sinh",
+      "name_en": "Rich primary mixed broadleaved and coniferous forest on soil mountain",
+      "hex": "#FFA0D0"
+    },
+    {
+      "text_code": "RTK",
+      "num_code": "70",
+      "name_vi": "Rừng trồng khác núi đất",
       "name_en": "Other plantation on soil mountain",
-      "hex": "#FFC080",
-      "rgb": "255,192,128"
+      "hex": "#FFC080"
     },
     {
-      "id": 71,
-      "code": "RTKD",
-      "code_lower": "rtkd",
-      "name_vn": "Rừng trồng khác núi đá",
+      "text_code": "RTKD",
+      "num_code": "71",
+      "name_vi": "Rừng trồng khác núi đá",
       "name_en": "Other plantation on rocky mountain",
-      "hex": "#FFE490",
-      "rgb": "255,228,144"
+      "hex": "#FFE490"
     },
     {
-      "id": 72,
-      "code": "DTR",
-      "code_lower": "dtr",
-      "name_vn": "Đất đã trồng trên núi đất",
+      "text_code": "DTR",
+      "num_code": "72",
+      "name_vi": "Đất đã trồng trên núi đất",
       "name_en": "New plantation on soil mountain",
-      "hex": "#FFE8D0",
-      "rgb": "255,232,208"
+      "hex": "#FFE8D0"
     },
     {
-      "id": 73,
-      "code": "DTRD",
-      "code_lower": "dtrd",
-      "name_vn": "Đất đã trồng trên núi đá",
+      "text_code": "DTRD",
+      "num_code": "73",
+      "name_vi": "Đất đã trồng trên núi đá",
       "name_en": "New plantation on rocky mountain",
-      "hex": "#FFE8D0",
-      "rgb": "255,232,208"
+      "hex": "#FFE8D0"
     },
     {
-      "id": 74,
-      "code": "DTRM",
-      "code_lower": "dtrm",
-      "name_vn": "Đất đã trồng trên đất ngập mặn",
+      "text_code": "DTRM",
+      "num_code": "74",
+      "name_vi": "Đất đã trồng trên đất ngập mặn",
       "name_en": "New plantation on saline wetland",
-      "hex": "#FFE8D0",
-      "rgb": "255,232,208"
+      "hex": "#FFE8D0"
     },
     {
-      "id": 75,
-      "code": "DTRP",
-      "code_lower": "dtrp",
-      "name_vn": "Đất đã trồng trên đất ngập phèn",
+      "text_code": "DTRP",
+      "num_code": "75",
+      "name_vi": "Đất đã trồng trên đất ngập phèn",
       "name_en": "New plantation on alkaline wetland",
-      "hex": "#FFE8D0",
-      "rgb": "255,232,208"
+      "hex": "#FFE8D0"
     },
     {
-      "id": 76,
-      "code": "DTRN",
-      "code_lower": "dtrn",
-      "name_vn": "Đất đã trồng trên đất ngập ngọt",
+      "text_code": "DTRN",
+      "num_code": "76",
+      "name_vi": "Đất đã trồng trên đất ngập ngọt",
       "name_en": "New plantation on freshwater wetland",
-      "hex": "#FFE8D0",
-      "rgb": "255,232,208"
+      "hex": "#FFE8D0"
     },
     {
-      "id": 77,
-      "code": "DTRC",
-      "code_lower": "dtrc",
-      "name_vn": "Đất đã trồng trên bãi cát",
+      "text_code": "DTRC",
+      "num_code": "77",
+      "name_vi": "Đất đã trồng trên bãi cát",
       "name_en": "New plantation on sandy soil",
-      "hex": "#FFE8D0",
-      "rgb": "255,232,208"
+      "hex": "#FFE8D0"
     },
     {
-      "id": 78,
-      "code": "DT2",
-      "code_lower": "dt2",
-      "name_vn": "Đất có cây gỗ tái sinh núi đất",
+      "text_code": "DT2",
+      "num_code": "78",
+      "name_vi": "Đất có cây gỗ tái sinh núi đất",
       "name_en": "Regeneration on soil mountain",
-      "hex": "#006000",
-      "rgb": "0,96,0"
+      "hex": "#0000FF"
     },
     {
-      "id": 79,
-      "code": "DT2D",
-      "code_lower": "dt2d",
-      "name_vn": "Đất có cây gỗ tái sinh núi đá",
+      "text_code": "DT2D",
+      "num_code": "79",
+      "name_vi": "Đất có cây gỗ tái sinh núi đá",
       "name_en": "Regeneration on rocky mountain",
-      "hex": "#006000",
-      "rgb": "0,96,0"
+      "hex": "#0000FF"
     },
     {
-      "id": 80,
-      "code": "DT2M",
-      "code_lower": "dt2m",
-      "name_vn": "Đất có cây gỗ tái sinh ngập mặn",
+      "text_code": "RKB1",
+      "num_code": "8",
+      "name_vi": "Rừng gỗ tự nhiên núi đất LRLK TB nguyên sinh",
+      "name_en": "Medium primary mixed broadleaved and coniferous forest on soil mountain",
+      "hex": "#FFA0D0"
+    },
+    {
+      "text_code": "DT2M",
+      "num_code": "80",
+      "name_vi": "Đất có cây gỗ tái sinh ngập mặn",
       "name_en": "Regeneration on saline wetland",
-      "hex": "#006000",
-      "rgb": "0,96,0"
+      "hex": "#0000FF"
     },
     {
-      "id": 81,
-      "code": "DT2P",
-      "code_lower": "dt2p",
-      "name_vn": "Đất có cây tái sinh ngập nước phèn",
+      "text_code": "DT2P",
+      "num_code": "81",
+      "name_vi": "Đất có cây tái sinh ngập nước phèn",
       "name_en": "Regeneration on alkaline wetland",
-      "hex": "#006000",
-      "rgb": "0,96,0"
+      "hex": "#0000FF"
     },
     {
-      "id": 82,
-      "code": "DT1",
-      "code_lower": "dt1",
-      "name_vn": "Đất trống núi đất",
+      "text_code": "DT1",
+      "num_code": "82",
+      "name_vi": "Đất trống núi đất",
       "name_en": "Open land on soil mountain",
-      "hex": "#00FF00",
-      "rgb": "0,255,0"
+      "hex": "#00A000"
     },
     {
-      "id": 83,
-      "code": "DT1D",
-      "code_lower": "dt1d",
-      "name_vn": "Đất trống núi đá",
+      "text_code": "DT1D",
+      "num_code": "83",
+      "name_vi": "Đất trống núi đá",
       "name_en": "Open land on rocky mountain",
-      "hex": "#E0E0E0",
-      "rgb": "224,224,224"
+      "hex": "#E0E0E0"
     },
     {
-      "id": 84,
-      "code": "DT1M",
-      "code_lower": "dt1m",
-      "name_vn": "Đất trống ngập mặn",
+      "text_code": "DT1M",
+      "num_code": "84",
+      "name_vi": "Đất trống ngập mặn",
       "name_en": "Open land on saline wetland",
-      "hex": "#00FF00",
-      "rgb": "0,255,0"
+      "hex": "#00A000"
     },
     {
-      "id": 85,
-      "code": "DT1P",
-      "code_lower": "dt1p",
-      "name_vn": "Đất trống ngập nước phèn",
+      "text_code": "DT1P",
+      "num_code": "85",
+      "name_vi": "Đất trống ngập nước phèn",
       "name_en": "Open land on alkaline wetland",
-      "hex": "#00FF00",
-      "rgb": "0,255,0"
+      "hex": "#00A000"
     },
     {
-      "id": 86,
-      "code": "BC1",
-      "code_lower": "bc1",
-      "name_vn": "Bãi cát",
+      "text_code": "BC1",
+      "num_code": "86",
+      "name_vi": "Bãi cát",
       "name_en": "Open land on sandy soil",
-      "hex": "#808080",
-      "rgb": "128,128,128"
+      "hex": "#FFFFFF"
     },
     {
-      "id": 87,
-      "code": "BC2",
-      "code_lower": "bc2",
-      "name_vn": "Bãi cát có cây rải rác",
+      "text_code": "BC2",
+      "num_code": "87",
+      "name_vi": "Bãi cát có cây rải rác",
       "name_en": "Open land with scattered trees on sandy soil",
-      "hex": "#00FF00",
-      "rgb": "0,255,0"
+      "hex": "#00FF00"
     },
     {
-      "id": 88,
-      "code": "NN",
-      "code_lower": "nn",
-      "name_vn": "Đất nông nghiệp núi đất",
+      "text_code": "NN",
+      "num_code": "88",
+      "name_vi": "Đất nông nghiệp núi đất",
       "name_en": "Agricultural crop on soil mountain",
-      "hex": "#FFFF90",
-      "rgb": "255,255,144"
+      "hex": "#FFFF90"
     },
     {
-      "id": 89,
-      "code": "NLD",
-      "code_lower": "nld",
-      "name_vn": "Đất nông nghiệp núi đá",
+      "text_code": "NLD",
+      "num_code": "89",
+      "name_vi": "Đất nông nghiệp núi đá",
       "name_en": "Agricultural crop on rocky mountain",
-      "hex": "#FFFF90",
-      "rgb": "255,255,144"
+      "hex": "#FFFF90"
     },
     {
-      "id": 90,
-      "code": "NLM",
-      "code_lower": "nlm",
-      "name_vn": "Đất nông nghiệp ngập mặn",
+      "text_code": "TXDG1",
+      "num_code": "9",
+      "name_vi": "Rừng gỗ tự nhiên núi đá LRTX giàu nguyên sinh",
+      "name_en": "Rich primary evergreen broadleaved forest on rocky mountain",
+      "hex": "#00D068"
+    },
+    {
+      "text_code": "NLM",
+      "num_code": "90",
+      "name_vi": "Đất nông nghiệp ngập mặn",
       "name_en": "Agricultural crop on saline wetland",
-      "hex": "#FFFF90",
-      "rgb": "255,255,144"
+      "hex": "#FFFF90"
     },
     {
-      "id": 91,
-      "code": "NLP",
-      "code_lower": "nlp",
-      "name_vn": "Đất nông nghiệp ngập nước ngọt",
+      "text_code": "NLP",
+      "num_code": "91",
+      "name_vi": "Đất nông nghiệp ngập nước ngọt",
       "name_en": "Agricultural crop on freshwater wetland",
-      "hex": "#FFFF90",
-      "rgb": "255,255,144"
+      "hex": "#FFFF90"
     },
     {
-      "id": 92,
-      "code": "MN",
-      "code_lower": "mn",
-      "name_vn": "Mặt nước ",
+      "text_code": "MN",
+      "num_code": "92",
+      "name_vi": "Mặt nước",
       "name_en": "Other freshwater wetland",
-      "hex": "#A0FFFF",
-      "rgb": "160,255,255"
+      "hex": "#A0FFFF"
     },
     {
-      "id": 93,
-      "code": "DKH",
-      "code_lower": "dkh",
-      "name_vn": "Đất khác",
+      "text_code": "DKH",
+      "num_code": "93",
+      "name_vi": "Đất khác",
       "name_en": "Other land",
-      "hex": "#808080",
-      "rgb": "128,128,128"
-    }
-  ],
-  "origins": [
-    {
-      "id": 1,
-      "name_en": "Natural forest",
-      "name_vn": "Rừng tự nhiên"
-    },
-    {
-      "id": 2,
-      "name_en": "Plantation",
-      "name_vn": "Rừng trồng"
-    },
-    {
-      "id": 3,
-      "name_en": "unforested land",
-      "name_vn": "Đất chưa có rừng"
-    }
-  ],
-  "functions": [
-    {
-      "id": 0,
-      "name_en": "Out of 3 types of forest",
-      "name_vn": "Ngoài 3 loại rừng"
-    },
-    {
-      "id": 1,
-      "name_en": "Protection forest",
-      "name_vn": "Rừng phòng hộ"
-    },
-    {
-      "id": 2,
-      "name_en": "Special use forest",
-      "name_vn": "Rừng đặc dụng"
-    },
-    {
-      "id": 3,
-      "name_en": "Production forest",
-      "name_vn": "Rừng sản xuất"
+      "hex": "#0000FF"
     }
   ]
 }
