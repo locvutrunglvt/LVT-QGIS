@@ -1,41 +1,54 @@
-# LVT Plugin Suite
+# LVT4U — QGIS Plugin Suite
 
-A comprehensive QGIS plugin suite for forestry, land management, and EUDR compliance.
+**GIS toolkit for forestry, land management, and EUDR compliance.**
 
-**Author:** Lộc Vũ Trung (LVT) / Slow Forest  
-**License:** GPL-3.0  
-**QGIS:** 3.28+
+A comprehensive QGIS plugin suite designed for Vietnamese forestry professionals, land managers, and GIS specialists.
 
-## Modules
+## Features
 
-| # | Module | Description | Status |
-|---|--------|-------------|--------|
-| 1 | Map Layout | Map layout builder | 🔄 Migration |
-| 2 | KML | SHP ↔ KML/KMZ conversion | 🔄 Migration |
-| 3 | MBTiles | MBTiles generator | 📋 Planned |
-| 4 | GeoJSON EUDR | EU 2023/1115 GeoJSON exporter | 📋 Planned |
-| 5 | Thematic Map | TT 16/2023 thematic mapping | 📋 Planned |
-| 6 | Basemap | Google Maps / Satellite / Hybrid | ✅ Done |
-| 7 | Legal Documents | Vietnamese forestry standards catalog | 📋 Planned |
-| 8 | Font Converter | TCVN3 / VNI / Unicode / ANSI | 📋 Planned |
-| 9 | CRS Tools | VN-2000 coordinate system utilities | 📋 Planned |
-| 10 | Map Packager | Project packaging (Folder / GeoPackage) | 📋 Planned |
-| 11 | About | Author info & language settings | ✅ Done |
+| Module | Description |
+|--------|-------------|
+| 🗺️ **Map Layout** | Template-driven layout generator (Slide/Print, A5→A0) |
+| 📂 **KML** | SHP ↔ KML/KMZ conversion with Google Earth popup support |
+| 🌍 **EUDR** | GeoJSON export compliant with EU Regulation 2023/1115 |
+| 🌲 **Thematic Map** | Forest status mapping (TT16/2023, TCVN 11565:2016) |
+| 🌐 **CRS Tools** | Set CRS, Reproject/Export, VN-2000 catalog (34 provinces) |
+| 🔤 **Font Converter** | TCVN3/VNI → Unicode conversion + SHP export |
+| 📊 **Excel → GIS** | Import Excel with polygon generation |
+| 🗂️ **MBTiles** | Offline tile generation |
+| 📦 **Package Map** | Bundle project + data for sharing |
+| 🛰️ **Basemap** | Google, Esri, CartoDB, OSM, Bing tile layers |
+| 📚 **Legal Docs** | Vietnamese forestry regulation reference |
 
-## Installation (Development)
+## Screenshots
 
-```powershell
-# Create junction link (no admin required)
-cmd /c mklink /J "%APPDATA%\QGIS\QGIS3\profiles\default\python\plugins\LVT" "path\to\this\repo"
-```
+*Coming soon*
 
-Then in QGIS: **Plugin Manager → Enable "LVT"**
+## Installation
 
-## Scientific Basis
+### From QGIS Plugin Manager
+1. Open QGIS → **Plugins** → **Manage and Install Plugins**
+2. Search for **LVT4U**
+3. Click **Install**
 
-All code is 100% original, built from:
-- Cartographic science and map projection mathematics
-- OGC Standards (KML 2.2, GeoJSON RFC 7946, GeoPackage 1.3)
-- Vietnamese technical standards (TCVN, VN-2000)
-- EU Regulation 2023/1115 (EUDR)
-- QGIS official API documentation
+### Manual Installation
+1. Download the latest ZIP from [Releases](https://github.com/locvutrunglvt/LVT-QGIS/releases)
+2. QGIS → **Plugins** → **Manage and Install Plugins** → **Install from ZIP**
+3. Select the downloaded ZIP file
+
+## Requirements
+
+- QGIS ≥ 3.28
+- No external Python dependencies required
+
+## Author
+
+**Lộc Vũ Trung** — GIS & Forestry Technology Specialist
+
+- 📱 Zalo: 0913 191 178
+- 🌐 Website: [locvutrung.lvtcenter.it.com](http://locvutrung.lvtcenter.it.com)
+- 🎬 YouTube: [youtube.com/@locvutrung](https://www.youtube.com/@locvutrung)
+
+## License
+
+This plugin is licensed under the [GNU General Public License v3.0](LICENSE).
