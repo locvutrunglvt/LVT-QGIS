@@ -277,7 +277,7 @@ class FontConverterDialog(QDialog):
 
         # --- Write to file ---
         if driver == "MapInfo File":
-            self._write_tab_ogr(layer, features, path, fields_list, target_crs)
+            self._write_tab(layer, features, path)
         else:
             self._write_shp(layer, features, path)
 
@@ -349,137 +349,79 @@ class FontConverterDialog(QDialog):
         except Exception as e:
             self.log.append(f"⚠️ Could not write .cpg: {e}")
 
-    def _write_tab_ogr(self, layer, features, path, fields_list, target_crs):
-        """Write TAB using osgeo.ogr with latin-1 encoding.
+    def _write_tab(self, layer, features, path):
+        """Write TAB: QgsVectorFileWriter (UTF-8) + binary re-encode.
 
-        This bypasses QgsVectorFileWriter which strips U+00AD (soft hyphen),
-        the TCVN3 code point for Vietnamese 'ư'.
-        With latin-1, every Unicode char U+0000–U+00FF maps to byte 0x00–0xFF
-        faithfully — no stripping, no multi-byte encoding.
-        MapInfo reads this with charset WindowsLatin1 → .VnTime renders correctly.
+        Step 1: Write TAB with UTF-8 (preserves ALL chars including U+00AD)
+        Step 2: Re-encode .DAT text data from UTF-8 → latin-1 single bytes
+        Step 3: Patch .TAB header charset: UTF-8 → WindowsLatin1
+
+        This ensures MapInfo reads the file natively with .VnTime font.
         """
-        from osgeo import ogr, osr
+        self.log.append("📝 Writing TAB (QgsVectorFileWriter + re-encode)")
 
-        self.log.append("📝 Using osgeo.ogr writer (latin-1 / WindowsLatin1)")
-
-        # Remove existing files
-        for old_ext in ['.tab', '.dat', '.map', '.id', '.ind']:
-            old_path = os.path.splitext(path)[0] + old_ext
-            if os.path.exists(old_path):
-                os.remove(old_path)
-
-        ogr_driver = ogr.GetDriverByName('MapInfo File')
-        ds = ogr_driver.CreateDataSource(path)
-        if ds is None:
-            self.log.append("❌ Could not create TAB datasource")
-            return
-
-        # Set up SRS
-        srs = osr.SpatialReference()
-        srs.ImportFromWkt(layer.crs().toWkt())
-
-        # Map QGIS geometry type to OGR
-        qgis_to_ogr_geom = {
-            QgsWkbTypes.Point: ogr.wkbPoint,
-            QgsWkbTypes.MultiPoint: ogr.wkbMultiPoint,
-            QgsWkbTypes.LineString: ogr.wkbLineString,
-            QgsWkbTypes.MultiLineString: ogr.wkbMultiLineString,
-            QgsWkbTypes.Polygon: ogr.wkbPolygon,
-            QgsWkbTypes.MultiPolygon: ogr.wkbMultiPolygon,
-        }
-        ogr_geom_type = qgis_to_ogr_geom.get(layer.wkbType(), ogr.wkbUnknown)
-
-        # Create layer with ENCODING option
-        ogr_layer = ds.CreateLayer(
-            os.path.splitext(os.path.basename(path))[0],
-            srs, ogr_geom_type,
-            options=['ENCODING=WindowsLatin1']
+        # Step 1: Write with QgsVectorFileWriter (UTF-8)
+        writer = QgsVectorFileWriter(
+            path, "UTF-8",
+            layer.fields(), layer.wkbType(), layer.crs(),
+            "MapInfo File"
         )
-        if ogr_layer is None:
-            self.log.append("❌ Could not create OGR layer")
-            ds = None
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
+            del writer
             return
-
-        # Create fields
-        for field in layer.fields():
-            if field.type() == QVariant.Int:
-                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTInteger)
-            elif field.type() == QVariant.LongLong:
-                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTInteger64)
-            elif field.type() == QVariant.Double:
-                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTReal)
-                ogr_field.SetWidth(field.length() if field.length() > 0 else 20)
-                ogr_field.SetPrecision(field.precision() if field.precision() > 0 else 6)
-            elif field.type() == QVariant.String:
-                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTString)
-                ogr_field.SetWidth(field.length() if field.length() > 0 else 254)
-            else:
-                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTString)
-                ogr_field.SetWidth(254)
-            ogr_layer.CreateField(ogr_field)
-
-        # Write features
-        layer_defn = ogr_layer.GetLayerDefn()
         for i, feat in enumerate(features):
             self.progress.setValue(i + 1)
+            writer.addFeature(feat)
+        del writer
 
-            ogr_feat = ogr.Feature(layer_defn)
-
-            # Set geometry
-            geom = feat.geometry()
-            if geom and not geom.isNull():
-                ogr_geom = ogr.CreateGeometryFromWkt(geom.asWkt())
-                if ogr_geom:
-                    ogr_feat.SetGeometry(ogr_geom)
-
-            # Set attributes
-            for j, field in enumerate(layer.fields()):
-                val = feat[field.name()]
-                if val is None:
-                    continue
-                if field.type() == QVariant.String and isinstance(val, str):
-                    if val:
-                        # Replace U+00AD (soft hyphen) with placeholder \x7f (DEL)
-                        # GDAL strips soft hyphens, so we use a substitute
-                        # then binary-patch the .DAT file after writing
-                        safe_val = val.replace('\xad', '\x7f')
-                        ogr_feat.SetField(j, safe_val)
-                elif field.type() in (QVariant.Int, QVariant.LongLong):
-                    try:
-                        ogr_feat.SetField(j, int(val))
-                    except (ValueError, TypeError):
-                        pass
-                elif field.type() == QVariant.Double:
-                    try:
-                        ogr_feat.SetField(j, float(val))
-                    except (ValueError, TypeError):
-                        pass
-                else:
-                    try:
-                        ogr_feat.SetField(j, str(val))
-                    except Exception:
-                        pass
-
-            ogr_layer.CreateFeature(ogr_feat)
-            ogr_feat = None
-
-        ds = None  # Close and flush
-
-        # --- Post-process: replace placeholder 0x7F → 0xAD in .DAT file ---
-        # 0xAD = TCVN3 code for 'ư' (soft hyphen in Unicode, stripped by GDAL)
+        # Step 2: Re-encode .DAT file from UTF-8 to latin-1
         dat_path = os.path.splitext(path)[0] + '.dat'
         if os.path.exists(dat_path):
             try:
                 with open(dat_path, 'rb') as f:
                     data = f.read()
-                patched = data.replace(b'\x7f', b'\xad')
-                if patched != data:
+
+                # Replace UTF-8 two-byte sequences (C2 80..C3 BF) with
+                # their single-byte latin-1 equivalents (80..FF).
+                # UTF-8: C2 xx -> byte xx (for 0x80-0xBF)
+                # UTF-8: C3 xx -> byte (xx + 0x40) (for 0xC0-0xFF)
+                out = bytearray()
+                idx = 0
+                n_fixed = 0
+                while idx < len(data):
+                    b = data[idx]
+                    if b == 0xC2 and idx + 1 < len(data) and 0x80 <= data[idx+1] <= 0xBF:
+                        out.append(data[idx+1])
+                        idx += 2
+                        n_fixed += 1
+                    elif b == 0xC3 and idx + 1 < len(data) and 0x80 <= data[idx+1] <= 0xBF:
+                        out.append(data[idx+1] + 0x40)
+                        idx += 2
+                        n_fixed += 1
+                    else:
+                        out.append(b)
+                        idx += 1
+
+                if n_fixed > 0:
                     with open(dat_path, 'wb') as f:
-                        f.write(patched)
-                    n_patches = data.count(b'\x7f')
-                    self.log.append(f"🔧 Patched {n_patches} soft-hyphen bytes (ư) in .DAT")
+                        f.write(bytes(out))
+                    self.log.append(f"🔧 Re-encoded {n_fixed} chars (UTF-8 → latin-1) in .DAT")
             except Exception as e:
-                self.log.append(f"⚠️ Could not patch .DAT: {e}")
+                self.log.append(f"⚠️ Could not re-encode .DAT: {e}")
+
+        # Step 3: Patch .TAB header charset
+        if os.path.exists(path):
+            try:
+                with open(path, 'r', encoding='ascii', errors='replace') as f:
+                    header = f.read()
+                patched = header.replace('Charset "UTF-8"', 'Charset "WindowsLatin1"')
+                if patched != header:
+                    with open(path, 'w', encoding='ascii', errors='replace') as f:
+                        f.write(patched)
+                    self.log.append('📝 Patched .TAB charset: UTF-8 → WindowsLatin1')
+            except Exception as e:
+                self.log.append(f"⚠️ Could not patch .TAB header: {e}")
 
         self.log.append(f"✅ TAB file written: {os.path.basename(path)}")
 
