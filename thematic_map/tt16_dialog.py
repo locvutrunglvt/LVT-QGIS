@@ -148,6 +148,13 @@ class TT16Dialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setMinimumWidth(740)
         self.setMinimumHeight(520)
+        # Open near-full-screen for better usability
+        try:
+            from qgis.PyQt.QtWidgets import QApplication
+            screen = QApplication.primaryScreen().availableGeometry()
+            self.resize(int(screen.width() * 0.85), int(screen.height() * 0.92))
+        except Exception:
+            self.resize(960, 780)
         self._master = _load_master()
         self._ready = False
         self._build_ui()
