@@ -418,43 +418,42 @@ class TT16Dialog(QDialog):
             )
             return
 
-        # Collect unique normalized values from data
+        # Use QGIS native uniqueValues (most reliable)
+        raw_unique = layer.uniqueValues(idx)
+        _log(f"Raw unique values ({len(raw_unique)}): "
+             f"{list(raw_unique)[:15]}")
+
+        # Build normalized lookup set
         unique_vals = set()
-        raw_samples = []
-        for feat in layer.getFeatures():
-            raw = feat[idx]
-            nv = self._normalize(raw)
+        for rv in raw_unique:
+            nv = self._normalize(rv)
             if nv:
                 unique_vals.add(nv)
-            if len(raw_samples) < 5:
-                raw_samples.append(f"{raw!r}({type(raw).__name__})→'{nv}'")
 
-        _log(f"Data samples: {raw_samples}")
-        _log(f"Unique values ({len(unique_vals)}): "
+        _log(f"Normalized unique ({len(unique_vals)}): "
              f"{sorted(list(unique_vals))[:20]}")
 
-        # Compare with category values
+        # Filter categories — keep only those with matching data
         cats = renderer.categories()
         total = len(cats)
-        cat_samples = []
-        for cat in cats[:5]:
+        new_cats = []
+        matched_vals = []
+        skipped_vals = []
+        for cat in cats:
             cv = cat.value()
             cn = self._normalize(cv)
-            cat_samples.append(
-                f"{cv!r}({type(cv).__name__})→'{cn}'"
-            )
-        _log(f"Category samples: {cat_samples}")
-
-        # Build new renderer with only matching categories
-        new_cats = []
-        for cat in cats:
-            cat_val = self._normalize(cat.value())
-            if cat_val and cat_val in unique_vals:
+            if cn and cn in unique_vals:
                 new_cats.append(cat)
+                matched_vals.append(cn)
+            else:
+                if cn:
+                    skipped_vals.append(cn)
 
+        _log(f"Matched ({len(new_cats)}): {matched_vals[:20]}")
+        _log(f"Skipped ({len(skipped_vals)}): {skipped_vals[:10]}")
         _log(f"Filter: {total} → {len(new_cats)} kept")
 
-        # Safety: only apply filter if we found matches
+        # Apply filtered renderer
         if new_cats:
             new_renderer = QgsCategorizedSymbolRenderer(
                 field_name, new_cats
@@ -470,7 +469,6 @@ class TT16Dialog(QDialog):
         layer.emitStyleChanged()
         layer.triggerRepaint()
 
-        # Use layerTreeRoot → model.refreshLayerLegend for nuclear refresh
         try:
             from qgis.core import QgsProject
             tree_root = QgsProject.instance().layerTreeRoot()
@@ -478,10 +476,7 @@ class TT16Dialog(QDialog):
             if node:
                 model = self.iface.layerTreeView().layerTreeModel()
                 model.refreshLayerLegend(node)
-                _log("refreshLayerLegend() done")
-        except Exception as e:
-            _log(f"refreshLayerLegend error: {e}")
-            # Fallback
+        except Exception:
             self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
         self.iface.mapCanvas().refresh()
