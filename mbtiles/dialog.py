@@ -568,7 +568,10 @@ class MBTilesDialog(QDialog):
 
         if den_t:
             uline = "_" * self.spn_uline.value()
-            lines = [num_t, uline, den_t]
+            n_spacing = self.spn_spacing.value()
+            # Build lines exactly like QGIS expression:
+            # numerator \n underline \n \n \n \n \n denominator
+            lines = [num_t, uline] + [""] * n_spacing + [den_t]
         else:
             lines = [num_t]
 
@@ -576,6 +579,8 @@ class MBTilesDialog(QDialog):
         start_y = (ph - total_h) // 2 + fm.ascent()
 
         for i, line in enumerate(lines):
+            if not line:  # empty spacing line
+                continue
             tw = fm.horizontalAdvance(line)
             tx = (pw - tw) // 2
             ty = start_y + i * line_gap
