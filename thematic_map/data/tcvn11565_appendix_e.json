@@ -1,0 +1,563 @@
+{
+  "description": "TCVN 11565:2016 Appendix E - Color codes for LDLR classification",
+  "codes": [
+    {
+      "num": 1,
+      "code": "TXG1",
+      "hex": "#00D000",
+      "rgb": "0,208,0"
+    },
+    {
+      "num": 2,
+      "code": "TXB1",
+      "hex": "#00FF00",
+      "rgb": "0,255,0"
+    },
+    {
+      "num": 3,
+      "code": "RLG1",
+      "hex": "#A0A000",
+      "rgb": "160,160,0"
+    },
+    {
+      "num": 4,
+      "code": "RLB1",
+      "hex": "#C0C000",
+      "rgb": "192,192,0"
+    },
+    {
+      "num": 5,
+      "code": "LKG1",
+      "hex": "#FF505A",
+      "rgb": "255,80,90"
+    },
+    {
+      "num": 6,
+      "code": "LKB1",
+      "hex": "#FF6982",
+      "rgb": "255105130"
+    },
+    {
+      "num": 7,
+      "code": "RKG1",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 8,
+      "code": "RKB1",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 9,
+      "code": "TXDG1",
+      "hex": "#00D068",
+      "rgb": "0,208,104"
+    },
+    {
+      "num": 10,
+      "code": "TXDB1",
+      "hex": "#00FF80",
+      "rgb": "0,255,128"
+    },
+    {
+      "num": 11,
+      "code": "RNM1",
+      "hex": "#7070FF",
+      "rgb": "112112255"
+    },
+    {
+      "num": 12,
+      "code": "RNP1",
+      "hex": "#A850FF",
+      "rgb": "168,80,255"
+    },
+    {
+      "num": 13,
+      "code": "RNP1",
+      "hex": "#E8D0FF",
+      "rgb": "232208255"
+    },
+    {
+      "num": 14,
+      "code": "TXG",
+      "hex": "#00D000",
+      "rgb": "0,208,0"
+    },
+    {
+      "num": 15,
+      "code": "TXB",
+      "hex": "#00FF00",
+      "rgb": "0,255,0"
+    },
+    {
+      "num": 16,
+      "code": "TXN",
+      "hex": "#90FF90",
+      "rgb": "144255144"
+    },
+    {
+      "num": 17,
+      "code": "TXK",
+      "hex": "#B0FFB0",
+      "rgb": "176255176"
+    },
+    {
+      "num": 18,
+      "code": "TXP",
+      "hex": "#B3FF40",
+      "rgb": "179,255,64"
+    },
+    {
+      "num": 19,
+      "code": "RLG",
+      "hex": "#A0A000",
+      "rgb": "160,160,0"
+    },
+    {
+      "num": 20,
+      "code": "RLB",
+      "hex": "#C0C000",
+      "rgb": "192,192,0"
+    },
+    {
+      "num": 21,
+      "code": "RLN",
+      "hex": "#E0E000",
+      "rgb": "224,224,0"
+    },
+    {
+      "num": 22,
+      "code": "RLK",
+      "hex": "#F0F000",
+      "rgb": "240,240,0"
+    },
+    {
+      "num": 23,
+      "code": "RLP",
+      "hex": "#EBFF00",
+      "rgb": "235,255,0"
+    },
+    {
+      "num": 24,
+      "code": "LKG",
+      "hex": "#FF505A",
+      "rgb": "255,80,90"
+    },
+    {
+      "num": 25,
+      "code": "LKB",
+      "hex": "#FF6982",
+      "rgb": "255105130"
+    },
+    {
+      "num": 26,
+      "code": "LKN",
+      "hex": "#FF8690",
+      "rgb": "255134144"
+    },
+    {
+      "num": 27,
+      "code": "LKK",
+      "hex": "#FF9A90",
+      "rgb": "255154144"
+    },
+    {
+      "num": 28,
+      "code": "LKP",
+      "hex": "#FFB0B0",
+      "rgb": "255176176"
+    },
+    {
+      "num": 29,
+      "code": "RKG",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 30,
+      "code": "RKB",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 31,
+      "code": "RKN",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 32,
+      "code": "RKK",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 33,
+      "code": "RKP",
+      "hex": "#FFA0D0",
+      "rgb": "255160208"
+    },
+    {
+      "num": 34,
+      "code": "TXDG",
+      "hex": "#00D068",
+      "rgb": "0,208,104"
+    },
+    {
+      "num": 35,
+      "code": "TXDB",
+      "hex": "#00FF80",
+      "rgb": "0,255,128"
+    },
+    {
+      "num": 36,
+      "code": "TXDN",
+      "hex": "#60FFB0",
+      "rgb": "96255176"
+    },
+    {
+      "num": 37,
+      "code": "TXDK",
+      "hex": "#A0FFD0",
+      "rgb": "160255208"
+    },
+    {
+      "num": 38,
+      "code": "TXDP",
+      "hex": "#D0FFE8",
+      "rgb": "208255232"
+    },
+    {
+      "num": 39,
+      "code": "RNMG",
+      "hex": "#7070FF",
+      "rgb": "112112255"
+    },
+    {
+      "num": 40,
+      "code": "RNMB",
+      "hex": "#9090FF",
+      "rgb": "144144255"
+    },
+    {
+      "num": 41,
+      "code": "RNMN",
+      "hex": "#C0C0FF",
+      "rgb": "192192255"
+    },
+    {
+      "num": 42,
+      "code": "RNMP",
+      "hex": "#D0D0FF",
+      "rgb": "208208255"
+    },
+    {
+      "num": 43,
+      "code": "RNPG",
+      "hex": "#A850FF",
+      "rgb": "168,80,255"
+    },
+    {
+      "num": 44,
+      "code": "RNPB",
+      "hex": "#C080FF",
+      "rgb": "192128255"
+    },
+    {
+      "num": 45,
+      "code": "RNPN",
+      "hex": "#D0A0FF",
+      "rgb": "208160255"
+    },
+    {
+      "num": 46,
+      "code": "RNPP",
+      "hex": "#D8B0FF",
+      "rgb": "216176255"
+    },
+    {
+      "num": 47,
+      "code": "RNN",
+      "hex": "#E8D0FF",
+      "rgb": "232208255"
+    },
+    {
+      "num": 48,
+      "code": "TLU",
+      "hex": "#D0E0FF",
+      "rgb": "208224255"
+    },
+    {
+      "num": 49,
+      "code": "NUA",
+      "hex": "#D0E0FF",
+      "rgb": "208224255"
+    },
+    {
+      "num": 50,
+      "code": "VAU",
+      "hex": "#D0E0FF",
+      "rgb": "208224255"
+    },
+    {
+      "num": 51,
+      "code": "LOO",
+      "hex": "#D0E0FF",
+      "rgb": "208224255"
+    },
+    {
+      "num": 52,
+      "code": "TNK",
+      "hex": "#D0E0FF",
+      "rgb": "208224255"
+    },
+    {
+      "num": 53,
+      "code": "TND",
+      "hex": "#D0E0FF",
+      "rgb": "208224255"
+    },
+    {
+      "num": 54,
+      "code": "HG1",
+      "hex": "#FFD0FF",
+      "rgb": "255208255"
+    },
+    {
+      "num": 55,
+      "code": "HG2",
+      "hex": "#FFD0FF",
+      "rgb": "255208255"
+    },
+    {
+      "num": 56,
+      "code": "HGD",
+      "hex": "#FFD0FF",
+      "rgb": "255208255"
+    },
+    {
+      "num": 57,
+      "code": "CD",
+      "hex": "#C0C0FF",
+      "rgb": "192192255"
+    },
+    {
+      "num": 58,
+      "code": "CDD",
+      "hex": "#C0C0FF",
+      "rgb": "192192255"
+    },
+    {
+      "num": 59,
+      "code": "CDN",
+      "hex": "#C0C0FF",
+      "rgb": "192192255"
+    },
+    {
+      "num": 60,
+      "code": "RTG",
+      "hex": "#FFD8B0",
+      "rgb": "255216176"
+    },
+    {
+      "num": 61,
+      "code": "RTGD",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 62,
+      "code": "RTM",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 63,
+      "code": "RTP",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 64,
+      "code": "RTC",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 65,
+      "code": "RTTN",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 66,
+      "code": "RTTND",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 67,
+      "code": "RTCD",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 68,
+      "code": "RTCDN",
+      "hex": "#FFD8B0",
+      "rgb": "255216176"
+    },
+    {
+      "num": 69,
+      "code": "RTCDC",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 70,
+      "code": "RTK",
+      "hex": "#FFC080",
+      "rgb": "255192128"
+    },
+    {
+      "num": 71,
+      "code": "RTKD",
+      "hex": "#FFE490",
+      "rgb": "255228144"
+    },
+    {
+      "num": 72,
+      "code": "DTR",
+      "hex": "#FFE8D0",
+      "rgb": "255232208"
+    },
+    {
+      "num": 73,
+      "code": "DTRD",
+      "hex": "#FFE8D0",
+      "rgb": "255232208"
+    },
+    {
+      "num": 74,
+      "code": "DTRM",
+      "hex": "#FFE8D0",
+      "rgb": "255232208"
+    },
+    {
+      "num": 75,
+      "code": "DTRP",
+      "hex": "#FFE8D0",
+      "rgb": "255232208"
+    },
+    {
+      "num": 76,
+      "code": "DTRN",
+      "hex": "#FFE8D0",
+      "rgb": "255232208"
+    },
+    {
+      "num": 77,
+      "code": "DTRC",
+      "hex": "#FFE8D0",
+      "rgb": "255232208"
+    },
+    {
+      "num": 78,
+      "code": "DT2",
+      "hex": "#006000",
+      "rgb": "0,96,0"
+    },
+    {
+      "num": 79,
+      "code": "DT2D",
+      "hex": "#006000",
+      "rgb": "0,96,0"
+    },
+    {
+      "num": 80,
+      "code": "DT2M",
+      "hex": "#006000",
+      "rgb": "0,96,0"
+    },
+    {
+      "num": 81,
+      "code": "DT2P",
+      "hex": "#006000",
+      "rgb": "0,96,0"
+    },
+    {
+      "num": 82,
+      "code": "DT1",
+      "hex": "#00FF00",
+      "rgb": "0,255,0"
+    },
+    {
+      "num": 83,
+      "code": "DT1D",
+      "hex": "#E0E0E0",
+      "rgb": "224224224"
+    },
+    {
+      "num": 84,
+      "code": "DT1M",
+      "hex": "#00FF00",
+      "rgb": "0,255,0"
+    },
+    {
+      "num": 85,
+      "code": "DT1P",
+      "hex": "#00FF00",
+      "rgb": "0,255,0"
+    },
+    {
+      "num": 86,
+      "code": "BC1",
+      "hex": "#808080",
+      "rgb": "128128128"
+    },
+    {
+      "num": 87,
+      "code": "BC2",
+      "hex": "#00FF00",
+      "rgb": "0,255,0"
+    },
+    {
+      "num": 88,
+      "code": "NN",
+      "hex": "#FFFF90",
+      "rgb": "255255144"
+    },
+    {
+      "num": 89,
+      "code": "NLD",
+      "hex": "#FFFF90",
+      "rgb": "255255144"
+    },
+    {
+      "num": 90,
+      "code": "NLM",
+      "hex": "#FFFF90",
+      "rgb": "255255144"
+    },
+    {
+      "num": 91,
+      "code": "NLP",
+      "hex": "#FFFF90",
+      "rgb": "255255144"
+    },
+    {
+      "num": 92,
+      "code": "MN",
+      "hex": "#A0FFFF",
+      "rgb": "160255255"
+    },
+    {
+      "num": 93,
+      "code": "DKH",
+      "hex": "#808080",
+      "rgb": "128128128"
+    }
+  ]
+}

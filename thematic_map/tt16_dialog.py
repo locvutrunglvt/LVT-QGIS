@@ -128,10 +128,15 @@ class TT16Dialog(QDialog):
         self.tabs.addTab(tab_ref, "📋 LDLR_Ref")
         self._build_ref_tab(tab_ref)
 
-        # --- Tab 3: Appendix 1 Summary ---
+        # --- Tab 3: Appendix 1 TT16/2023 ---
         tab_appendix = QWidget()
-        self.tabs.addTab(tab_appendix, "📜 " + tr("Appendix 1"))
+        self.tabs.addTab(tab_appendix, "📜 Phụ lục 1 — TT16")
         self._build_appendix_tab(tab_appendix)
+
+        # --- Tab 4: Appendix E TCVN 11565:2016 ---
+        tab_appendix_e = QWidget()
+        self.tabs.addTab(tab_appendix_e, "📗 Phụ lục E — TCVN 11565")
+        self._build_appendix_e_tab(tab_appendix_e)
 
         # Init
         self._on_layer_changed(self.cmb_layer.currentLayer())
@@ -390,6 +395,7 @@ class TT16Dialog(QDialog):
                     continue
                 name = c.get(f"name_{lang}", c.get("name_en", ""))
                 hex_c = c["hex"]
+                vol = c.get('volume_ha', '—')
                 html.append(
                     f'<tr>'
                     f'<td style="width:60px;font-weight:bold;color:#333;">{tc}</td>'
@@ -397,10 +403,87 @@ class TT16Dialog(QDialog):
                     f'<span style="background:{hex_c};padding:1px 8px;'
                     f'border:1px solid #ccc;">&nbsp;</span></td>'
                     f'<td style="color:#555;padding-left:6px;">{name}</td>'
+                    f'<td style="color:#0d47a1;padding-left:12px;font-size:11px;">{vol}</td>'
                     f'</tr>'
                 )
             html.append('</table>')
 
+        html.append('</body></html>')
+
+        browser = QTextBrowser()
+        browser.setHtml('\n'.join(html))
+        browser.setOpenExternalLinks(False)
+        ly.addWidget(browser)
+
+    # -----------------------------------------------------------------
+    # Appendix E — TCVN 11565:2016 Color Classification
+    # -----------------------------------------------------------------
+    def _build_appendix_e_tab(self, parent):
+        """Build Appendix E (TCVN 11565:2016) color table."""
+        ly = QVBoxLayout(parent)
+
+        # Load Appendix E data
+        ae_path = os.path.join(_DATA_DIR, 'tcvn11565_appendix_e.json')
+        try:
+            with open(ae_path, 'r', encoding='utf-8') as f:
+                ae_data = json.load(f)
+        except Exception:
+            ly.addWidget(QLabel('Could not load TCVN 11565 Appendix E data.'))
+            return
+
+        ae_codes = ae_data.get('codes', [])
+        tt16_map = {c['text_code']: c for c in self._master['codes']}
+
+        lang = current_language()
+        html = [
+            '<html><body style="font-family:Segoe UI,sans-serif;font-size:12px;">',
+            '<h3 style="color:#2e7d32;">Phụ lục E — TCVN 11565:2016</h3>',
+            '<p style="color:#888;font-size:11px;">',
+            'Bảng mã màu hiện trạng rừng theo TCVN 11565:2016 (cũ) — '
+            'So sánh với TT 16/2023 (mới)',
+            '</p><hr>',
+            '<table cellspacing="0" cellpadding="3" '
+            'style="border-collapse:collapse;width:100%;">',
+            '<tr style="background:#e8f5e9;font-weight:bold;">',
+            '<td style="width:30px;">STT</td>',
+            '<td style="width:60px;">Mã</td>',
+            '<td style="width:70px;">TCVN 11565</td>',
+            '<td style="width:70px;">TT16/2023</td>',
+            '<td>Khớp?</td>',
+            '</tr>',
+        ]
+
+        diffs = 0
+        for ae in ae_codes:
+            code = ae['code']
+            ae_hex = ae['hex'].upper()
+            tt16_entry = tt16_map.get(code)
+            tt16_hex = tt16_entry['hex'].upper() if tt16_entry else '—'
+
+            match = '✅' if tt16_hex == ae_hex else '⚠️'
+            if tt16_hex != ae_hex and tt16_hex != '—':
+                diffs += 1
+                row_bg = '#fff3e0'
+            else:
+                row_bg = '#fff'
+
+            html.append(
+                f'<tr style="background:{row_bg};">'
+                f'<td>{ae["num"]}</td>'
+                f'<td style="font-weight:bold;">{code}</td>'
+                f'<td><span style="background:{ae_hex};padding:1px 10px;'
+                f'border:1px solid #ccc;">&nbsp;</span> {ae_hex}</td>'
+                f'<td><span style="background:{tt16_hex};padding:1px 10px;'
+                f'border:1px solid #ccc;">&nbsp;</span> {tt16_hex}</td>'
+                f'<td>{match}</td>'
+                f'</tr>'
+            )
+
+        html.append('</table>')
+        html.append(
+            f'<p style="margin-top:8px;color:#555;">'
+            f'Tổng: {len(ae_codes)} mã | Khác biệt: {diffs} mã</p>'
+        )
         html.append('</body></html>')
 
         browser = QTextBrowser()
