@@ -51,6 +51,8 @@ class MBTilesDialog(QDialog):
         self._font_color = QColor("#000000")
         self._num_checks = {}
         self._den_checks = {}
+        self._num_order = []   # tracks selection sequence
+        self._den_order = []
         self.setMinimumSize(820, 600)
         self.resize(860, 650)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -454,29 +456,43 @@ class MBTilesDialog(QDialog):
         self.lbl_geom.setText(QgsWkbTypes.displayString(layer.wkbType()))
         self.lbl_count.setText(str(layer.featureCount()))
         fields = [f.name() for f in layer.fields()]
-        self._populate_checks(self.ly_num, self._num_checks, fields)
-        self._populate_checks(self.ly_den, self._den_checks, fields)
+        self._populate_checks(self.ly_num, self._num_checks, fields, self._num_order)
+        self._populate_checks(self.ly_den, self._den_checks, fields, self._den_order)
         self._update_preview()
 
-    def _populate_checks(self, layout, cdict, fields):
+    def _populate_checks(self, layout, cdict, fields, order_list):
         while layout.count():
             w = layout.takeAt(0).widget()
             if w:
                 w.deleteLater()
         cdict.clear()
+        order_list.clear()
         for f in fields:
             chk = QCheckBox(f)
-            chk.stateChanged.connect(self._update_preview)
+            chk.stateChanged.connect(
+                lambda state, name=f, ol=order_list: self._on_field_toggled(state, name, ol)
+            )
             layout.addWidget(chk)
             cdict[f] = chk
 
-    def _checked(self, cdict):
-        return [k for k, v in cdict.items() if v.isChecked()]
+    def _on_field_toggled(self, state, field_name, order_list):
+        """Track check order: append on check, remove on uncheck."""
+        if state == Qt.Checked:
+            if field_name not in order_list:
+                order_list.append(field_name)
+        else:
+            if field_name in order_list:
+                order_list.remove(field_name)
+        self._update_preview()
+
+    def _checked(self, cdict, order_list):
+        """Return checked fields sorted by selection order."""
+        return [f for f in order_list if f in cdict and cdict[f].isChecked()]
 
     # ---- Expression ----
     def _build_expression(self):
-        num_f = self._checked(self._num_checks)
-        den_f = self._checked(self._den_checks)
+        num_f = self._checked(self._num_checks, self._num_order)
+        den_f = self._checked(self._den_checks, self._den_order)
         nsep = self.edt_num_sep.text() or "-"
         dsep = self.edt_den_sep.text() or "-"
 
@@ -513,8 +529,8 @@ class MBTilesDialog(QDialog):
 
     # ---- Preview ----
     def _update_preview(self):
-        num_f = self._checked(self._num_checks)
-        den_f = self._checked(self._den_checks)
+        num_f = self._checked(self._num_checks, self._num_order)
+        den_f = self._checked(self._den_checks, self._den_order)
         nsep = self.edt_num_sep.text() or "-"
         dsep = self.edt_den_sep.text() or "-"
         sz = self.spn_fsize.value()
