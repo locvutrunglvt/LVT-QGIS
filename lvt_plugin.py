@@ -170,17 +170,9 @@ class LvtPlugin:
 
         self.lvt_menu.addSeparator()
 
-        # --- Basemap (submenu) ---
+        # --- Basemap (submenu with provider sub-groups) ---
         basemap_sub = self._add_submenu("basemap.png", "Basemap")
-        self._add_action(
-            "basemap.png", "Google Maps", self._load_basemap_maps, basemap_sub
-        )
-        self._add_action(
-            "basemap.png", "Google Satellite", self._load_basemap_satellite, basemap_sub
-        )
-        self._add_action(
-            "basemap.png", "Google Hybrid", self._load_basemap_hybrid, basemap_sub
-        )
+        self._build_basemap_menu(basemap_sub)
 
         self.lvt_menu.addSeparator()
 
@@ -200,6 +192,103 @@ class LvtPlugin:
 
         # --- About ---
         self._add_action("about.png", "About", self._open_about)
+
+    # ------------------------------------------------------------------
+    # Basemap Registry
+    # ------------------------------------------------------------------
+
+    # Basemap catalog: (display_name, url, zmin, zmax)
+    _BASEMAPS = {
+        "🌍 Google": [
+            ("Google Maps",
+             "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}", 0, 22),
+            ("Google Satellite",
+             "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", 0, 22),
+            ("Google Hybrid",
+             "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}", 0, 22),
+            ("Google Terrain",
+             "https://mt1.google.com/vt/lyrs=t&x={x}&y={y}&z={z}", 0, 19),
+            ("Google Terrain Hybrid",
+             "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}", 0, 19),
+        ],
+        "🗺️ Esri": [
+            ("Esri Satellite",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", 0, 22),
+            ("Esri Street",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", 0, 22),
+            ("Esri Topographic",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", 0, 22),
+            ("Esri National Geographic",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}", 0, 22),
+            ("Esri Gray (light)",
+             "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16),
+            ("Esri Gray (dark)",
+             "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", 0, 16),
+            ("Esri Ocean",
+             "https://services.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}", 0, 10),
+            ("Esri Terrain",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base/MapServer/tile/{z}/{y}/{x}", 0, 13),
+            ("Esri Physical",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}", 0, 22),
+            ("Esri Transportation",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}", 0, 20),
+            ("Esri Boundaries & Places",
+             "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", 0, 20),
+        ],
+        "🗾 OpenStreetMap": [
+            ("OpenStreetMap",
+             "https://tile.openstreetmap.org/{z}/{x}/{y}.png", 0, 19),
+            ("OpenTopoMap",
+             "https://tile.opentopomap.org/{z}/{x}/{y}.png", 1, 17),
+            ("OSM H.O.T.",
+             "https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", 0, 19),
+        ],
+        "🎨 CartoDB": [
+            ("CartoDB Positron (light)",
+             "https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", 0, 20),
+            ("CartoDB Dark Matter",
+             "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", 0, 20),
+        ],
+        "🖌️ Stamen": [
+            ("Stamen Terrain",
+             "https://tile.stamen.com/terrain/{z}/{x}/{y}.png", 0, 20),
+            ("Stamen Toner",
+             "https://tile.stamen.com/toner/{z}/{x}/{y}.png", 0, 20),
+            ("Stamen Toner Light",
+             "https://tile.stamen.com/toner-lite/{z}/{x}/{y}.png", 0, 20),
+            ("Stamen Watercolor",
+             "https://tile.stamen.com/watercolor/{z}/{x}/{y}.jpg", 0, 18),
+        ],
+        "🌐 Bing": [
+            ("Bing VirtualEarth",
+             "http://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1", 0, 22),
+        ],
+        "🇻🇳 Vietnam": [
+            ("Vietbando Maps",
+             "http://images.vietbando.com/ImageLoader/GetImage.ashx?Ver=2016&LayerIds=VBD&Y={y}&X={x}&Level={z}", 0, 22),
+            ("HCMGIS Aerial",
+             "http://trueortho.hcmgis.vn/basemap/cache_lidar/{z}/{x}/{y}.jpg", 0, 22),
+        ],
+    }
+
+    def _build_basemap_menu(self, parent_menu):
+        """Build hierarchical basemap menu from the registry."""
+        for group_label, layers in self._BASEMAPS.items():
+            group_menu = QMenu(group_label, self.iface.mainWindow())
+            group_menu.setIcon(self._icon("basemap.png"))
+            parent_menu.addMenu(group_menu)
+            self.submenus.append(group_menu)
+            for name, url, zmin, zmax in layers:
+                action = QAction(
+                    self._icon("basemap.png"), name,
+                    self.iface.mainWindow(),
+                )
+                action.triggered.connect(
+                    lambda checked, n=name, u=url, lo=zmin, hi=zmax:
+                        self._add_xyz_basemap(n, u, lo, hi)
+                )
+                group_menu.addAction(action)
+                self.actions.append(action)
 
     # ------------------------------------------------------------------
     # Module Launchers (Lazy Loading)
@@ -223,7 +312,7 @@ class LvtPlugin:
         """Open the KML dialog (SHP to KML/KMZ tab)."""
         self._ensure_kml_dialog()
         dlg = self._dialogs["kml"]
-        dlg.tabs.setCurrentIndex(0)  # SHP → KML tab
+        dlg.tabs.setCurrentIndex(0)
         dlg.show()
         dlg.raise_()
         dlg.activateWindow()
@@ -232,7 +321,7 @@ class LvtPlugin:
         """Open the KML dialog (KML/KMZ to SHP tab)."""
         self._ensure_kml_dialog()
         dlg = self._dialogs["kml"]
-        dlg.tabs.setCurrentIndex(1)  # KML → SHP tab
+        dlg.tabs.setCurrentIndex(1)
         dlg.show()
         dlg.raise_()
         dlg.activateWindow()
@@ -300,27 +389,6 @@ class LvtPlugin:
         dlg.raise_()
         dlg.activateWindow()
 
-    def _load_basemap_maps(self):
-        """Add Google Maps basemap to the current project."""
-        self._add_xyz_basemap(
-            "Google Maps",
-            "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
-        )
-
-    def _load_basemap_satellite(self):
-        """Add Google Satellite basemap to the current project."""
-        self._add_xyz_basemap(
-            "Google Satellite",
-            "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",
-        )
-
-    def _load_basemap_hybrid(self):
-        """Add Google Hybrid basemap to the current project."""
-        self._add_xyz_basemap(
-            "Google Hybrid",
-            "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
-        )
-
     def _open_legal(self):
         """Open the Legal Documents dialog."""
         self._show_placeholder("Legal Documents")
@@ -364,7 +432,7 @@ class LvtPlugin:
             tr("{module} — Coming soon!").format(module=module_name),
         )
 
-    def _add_xyz_basemap(self, name, url):
+    def _add_xyz_basemap(self, name, url, zmin=0, zmax=19):
         """Add an XYZ tile layer to the current QGIS project.
 
         Uses the standard XYZ tile URI format supported by QGIS raster provider.
@@ -372,12 +440,14 @@ class LvtPlugin:
         Args:
             name: Display name for the layer.
             url: XYZ tile URL template with {x}, {y}, {z} placeholders.
+            zmin: Minimum zoom level (default 0).
+            zmax: Maximum zoom level (default 19).
         """
         from qgis.core import QgsRasterLayer, QgsProject
 
         uri = (
             f"type=xyz&url={url}"
-            f"&zmin=0&zmax=19"
+            f"&zmin={zmin}&zmax={zmax}"
         )
 
         # Avoid duplicates — check if a layer with this name already exists
