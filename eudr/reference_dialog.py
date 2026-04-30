@@ -216,6 +216,12 @@ class EudrReferenceDialog(QDialog):
         if is_vi:
             html = """
             <div style='font-family:Arial;padding:10px;'>
+            <div style='background:linear-gradient(135deg,#1B5E20,#2E7D32,#43A047);
+            color:white;padding:16px 20px;border-radius:8px;margin-bottom:14px;
+            text-align:center;font-size:14px;letter-spacing:0.5px;line-height:1.6;'>
+            🌿 <i>"Hãy chứng minh cho tôi sản phẩm của bạn<br>
+            đến từ polygon xinh đẹp đó"</i> 🌿
+            </div>
             <h2 style='color:#1B5E20;'>📋 Tóm tắt Quy định EUDR</h2>
 
             <h3>Quy định EU 2023/1115 là gì?</h3>
@@ -266,6 +272,12 @@ class EudrReferenceDialog(QDialog):
         else:
             html = """
             <div style='font-family:Arial;padding:10px;'>
+            <div style='background:linear-gradient(135deg,#1B5E20,#2E7D32,#43A047);
+            color:white;padding:16px 20px;border-radius:8px;margin-bottom:14px;
+            text-align:center;font-size:14px;letter-spacing:0.5px;line-height:1.6;'>
+            🌿 <i>"Prove to me that your product<br>
+            comes from that beautiful polygon"</i> 🌿
+            </div>
             <h2 style='color:#1B5E20;'>📋 EUDR Regulation Summary</h2>
 
             <h3>What is EU Regulation 2023/1115?</h3>
