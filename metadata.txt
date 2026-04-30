@@ -1,18 +1,34 @@
 [general]
 name=LVT4U
 qgisMinimumVersion=3.28
-description=GIS toolkit for forestry, land management, and EUDR compliance.
+qgisMaximumVersion=3.99
+description=All-in-one GIS toolkit: thematic maps, lot labels, MBTiles, KML/KMZ, basemaps, font conversion, CRS tools, map layouts, Excel-to-GIS, and EUDR export.
 version=1.9.0
-author=Lộc Vũ Trung (LVT) / Slow Forest
-email=support@slowforest.org
+author=Loc Vu Trung
+email=locvutrung.lvt@gmail.com
 
-about=A comprehensive QGIS plugin suite providing map layout, KML conversion, MBTiles generation, EUDR GeoJSON export, thematic mapping, basemap loading, Vietnamese font conversion, VN-2000 CRS tools, and project packaging. Built from cartographic science and international standards.
+about=LVT4U is a comprehensive QGIS plugin suite designed for Vietnamese forestry, land management, and international compliance workflows.
+
+    Key Features:
+    • Thematic Map — Generate categorized/graduated maps from attribute data
+    • Lot Labels — Create parcel labels for cadastral maps
+    • MBTiles — Export map tiles for offline mobile use
+    • KML/KMZ — Convert layers to Google Earth format with styled popups
+    • Excel to GIS — Import Excel/CSV spreadsheets as GIS layers
+    • Basemap — Load Google Maps, Satellite, Hybrid, OpenStreetMap tiles
+    • Font Converter — Convert between Unicode, TCVN3, and VNI encodings
+    • CRS Tools — Transform coordinates with VN-2000 province support
+    • Map Layout — Template-driven A5–A0 print/slide layouts with grid
+    • EUDR Export — Generate GeoJSON compliant with EU Regulation 2023/1115
+
+    Built with cartographic science and international standards.
+    Supports Vietnamese and English interface.
 
 tracker=https://github.com/locvutrunglvt/LVT-QGIS/issues
 repository=https://github.com/locvutrunglvt/LVT-QGIS
 homepage=https://github.com/locvutrunglvt/LVT-QGIS
 
-tags=vietnam,forestry,layout,kml,eudr,geojson,mbtiles,crs,vn2000,basemap,font
+tags=vietnam,forestry,thematic,layout,kml,eudr,geojson,mbtiles,crs,vn2000,basemap,font,cadastral,land,excel
 
 category=Vector
 icon=icon.png
@@ -20,10 +36,19 @@ icon=icon.png
 experimental=True
 deprecated=False
 
+hasProcessingProvider=no
+server=False
+
 changelog=
-    1.0.0 - Initial release: Umbrella plugin with menu framework
-          - Map Layout: Template-driven layout generator
-          - KML: SHP to KML/KMZ export and KML to SHP import
-          - EUDR: GeoJSON export compliant with EU Regulation 2023/1115
-          - Basemap: Google Maps / Satellite / Hybrid loader
-          - About: Author info and language settings (EN/VI)
+    1.9.0 - Comprehensive plugin suite with 10 integrated modules
+          - Thematic Map: categorized/graduated map generation
+          - Lot Labels: parcel labeling for cadastral maps
+          - MBTiles: offline tile export
+          - KML/KMZ: Google Earth export with styled popups
+          - Excel to GIS: spreadsheet import
+          - Basemap: Google/OSM tile loading
+          - Font Converter: Unicode/TCVN3/VNI conversion for MapInfo
+          - CRS Tools: VN-2000 coordinate transformation
+          - Map Layout: template-driven A5-A0 layouts
+          - EUDR Export: EU deforestation regulation compliance
+    1.0.0 - Initial release: umbrella plugin framework
