@@ -249,10 +249,10 @@ class FontConverterDialog(QDialog):
         QApplication.processEvents()
 
         # --- Write features with QgsVectorFileWriter ---
-        # TAB: use "System" encoding (Windows-1252) so MapInfo reads natively
+        # TAB: use CP1252 (= WindowsLatin1) so MapInfo reads single bytes
         #   TCVN3 chars U+00A0-U+00FF → single bytes 0xA0-0xFF
         # SHP: use UTF-8 + .cpg
-        file_encoding = "System" if driver == "MapInfo File" else "UTF-8"
+        file_encoding = "CP1252" if driver == "MapInfo File" else "UTF-8"
         self.log.append(f"📝 Encoding: {file_encoding}")
 
         writer = QgsVectorFileWriter(
