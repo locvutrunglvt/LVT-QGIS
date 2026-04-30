@@ -52,9 +52,12 @@ _TRANSLATIONS = {
     "Style Library": "Thư viện định dạng",
     "Excel → GIS": "Chuyển Excel vào bản đồ",
     "Thematic Map": "Bản đồ chuyên đề",
+    "Forest Status Thematic Map": "Bản đồ chuyên đề hiện trạng rừng",
+    "Create Plot Labels": "Tạo nhãn lô",
     "Apply Style": "Áp dụng kiểu",
     "Apply": "Áp dụng",
     "Plot Labels": "Nhãn lô",
+    "Close": "Đóng",
     "Legal Docs": "Văn bản pháp lý",
     "Appendix 1": "Phụ lục 1",
 

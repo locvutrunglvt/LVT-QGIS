@@ -168,16 +168,13 @@ class LvtPlugin:
         self.lvt_menu.addSeparator()
 
         # --- Thematic Map (submenu) ---
-        thematic_sub = self._add_submenu("thematic.png", "Thematic Map")
+        thematic_sub = self._add_submenu("thematic.png", "Forest Status Thematic Map")
         self._add_action(
             "thematic.png", "Circular 16/2023", self._open_thematic_tt16, thematic_sub
         )
-        self._add_action(
-            "thematic.png", "Circular 33", self._open_thematic_tt33, thematic_sub
-        )
         thematic_sub.addSeparator()
         self._add_action(
-            "thematic.png", "Plot Labels", self._open_thematic_labels, thematic_sub
+            "thematic.png", "Create Plot Labels", self._open_thematic_labels, thematic_sub
         )
 
         self.lvt_menu.addSeparator()
@@ -411,8 +408,15 @@ class LvtPlugin:
         dlg.activateWindow()
 
     def _open_legal(self):
-        """Open the Legal Documents dialog."""
-        self._show_placeholder("Legal Documents")
+        """Open the Legal Documents Library dialog."""
+        if "legal" not in self._dialogs:
+            from .legal_docs.dialog import LegalDocsDialog
+            self._dialogs["legal"] = LegalDocsDialog(self.iface)
+
+        dlg = self._dialogs["legal"]
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_font(self):
         """Open the Font Converter dialog."""
