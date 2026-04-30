@@ -55,6 +55,13 @@ class PlotLabelsDialog(MBTilesDialog):
         else:
             self.tabs.setTabText(0, "Plot Labels")
 
+    def _get_layer(self):
+        """Return forced layer (from TT16 embedding) or fallback to cbo_layer."""
+        forced = getattr(self, '_forced_layer', None)
+        if forced is not None:
+            return forced
+        return super()._get_layer()
+
     def _apply_to_layer(self):
         """Apply ONLY labels — no polygon styling (stroke/fill).
 

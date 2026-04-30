@@ -742,15 +742,12 @@ class TT16Dialog(QDialog):
         if hasattr(self, '_label_dlg') and self._label_dlg is not None:
             layer = self.cmb_layer.currentLayer()
             if layer:
-                # Ensure embedded dialog's layer list is populated
-                self._label_dlg.refresh_layers()
-                # Find and select the same layer in the embedded dialog
-                for i in range(self._label_dlg.cbo_layer.count()):
-                    if self._label_dlg.cbo_layer.itemData(i) == layer.id():
-                        self._label_dlg.cbo_layer.setCurrentIndex(i)
-                        break
-                # Apply labels (uses overridden pure-label method)
-                self._label_dlg._apply_to_layer()
+                # Bypass cbo_layer entirely — inject layer directly
+                self._label_dlg._forced_layer = layer
+                try:
+                    self._label_dlg._apply_to_layer()
+                finally:
+                    self._label_dlg._forced_layer = None
 
     # -----------------------------------------------------------------
     # Events
@@ -772,11 +769,15 @@ class TT16Dialog(QDialog):
         # Sync embedded label dialog so its field checkboxes
         # always reflect the currently selected thematic layer
         if hasattr(self, '_label_dlg') and self._label_dlg is not None and layer:
-            self._label_dlg.refresh_layers()
-            for i in range(self._label_dlg.cbo_layer.count()):
-                if self._label_dlg.cbo_layer.itemData(i) == layer.id():
-                    self._label_dlg.cbo_layer.setCurrentIndex(i)
-                    break
+            # Populate layer list and select matching layer for field sync
+            try:
+                self._label_dlg.refresh_layers()
+                for i in range(self._label_dlg.cbo_layer.count()):
+                    if self._label_dlg.cbo_layer.itemData(i) == layer.id():
+                        self._label_dlg.cbo_layer.setCurrentIndex(i)
+                        break
+            except Exception:
+                pass  # Non-critical — fields may not update
 
     def _on_style_changed(self, index):
         if index < 0:

@@ -255,9 +255,18 @@ class FontConverterDialog(QDialog):
         self.log.append(f"💾 Format: {driver}")
         QApplication.processEvents()
 
-        # --- Write features with QgsVectorFileWriter (always UTF-8) ---
+        # --- Choose encoding ---
+        # For Unicode→TCVN3 + MapInfo TAB: use ISO-8859-1 directly
+        # so bytes like 0xAD (ư) and 0xA6 (Ư) are written as-is
+        # without UTF-8 multi-byte encoding that causes issues.
+        if mode == 2 and driver == "MapInfo File":
+            write_enc = "ISO-8859-1"
+            self.log.append("📝 Encoding: ISO-8859-1 (direct TCVN3 bytes)")
+        else:
+            write_enc = "UTF-8"
+
         writer = QgsVectorFileWriter(
-            path, "UTF-8",
+            path, write_enc,
             layer.fields(), layer.wkbType(), layer.crs(),
             driver
         )
@@ -298,8 +307,12 @@ class FontConverterDialog(QDialog):
         QApplication.processEvents()
 
         # --- Post-process for MapInfo TAB: patch charset + re-encode .DAT ---
-        if driver == "MapInfo File":
+        # Skip when using ISO-8859-1 (mode 2) — bytes are already correct
+        if driver == "MapInfo File" and mode != 2:
             self._postprocess_tab(path)
+        elif driver == "MapInfo File" and mode == 2:
+            # Just patch the TAB header charset for TCVN3
+            self._patch_tab_charset(path)
 
         # --- Write .cpg file for SHP ---
         if driver == "ESRI Shapefile":
@@ -351,6 +364,22 @@ class FontConverterDialog(QDialog):
             f"Font conversions: {converted_count}"
             + tip
         )
+    def _patch_tab_charset(self, tab_path):
+        """Patch .TAB header charset only (no .DAT re-encoding needed)."""
+        try:
+            with open(tab_path, 'r', encoding='ascii', errors='replace') as f:
+                header = f.read()
+            patched = header.replace(
+                'Charset "Neutral"', 'Charset "WindowsLatin1"'
+            ).replace(
+                '!charset Neutral', '!charset WindowsLatin1'
+            )
+            if patched != header:
+                with open(tab_path, 'w', encoding='ascii', errors='replace') as f:
+                    f.write(patched)
+                self.log.append('📝 .TAB charset → WindowsLatin1')
+        except Exception as e:
+            self.log.append(f'⚠️ Could not patch .TAB header: {e}')
 
     def _postprocess_tab(self, tab_path):
         """Post-process TAB files for MapInfo compatibility.
