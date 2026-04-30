@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """LVT4U MBTiles Module — Vector Tile Creator Dialog."""
-from qgis.PyQt.QtCore import Qt, QSize, QSizeF
+from qgis.PyQt.QtCore import Qt, QSize, QSizeF, QSettings
 from qgis.PyQt.QtGui import QColor, QFont, QPainter, QPixmap, QPen, QBrush
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QTabWidget, QWidget,
@@ -42,6 +42,22 @@ def _tr(t, lang='vi'):
 
 
 class MBTilesDialog(QDialog):
+    _SETTINGS_PREFIX = "LVT4U/label/"
+
+    # Factory defaults (used by Reset and first-run)
+    _FACTORY = {
+        "stroke_color": "#55ff00", "fill_color": "#ffff00",
+        "font_color": "#00ffff", "buf_color": "#ffffff",
+        "bg_color": "#ffaa00", "stroke_width": 0.5,
+        "fill_opacity": 5, "font": "Arial", "font_size": 10,
+        "bold": False, "line_height": 20, "underline_count": 8,
+        "spacing_lines": 5, "num_sep": "-", "den_sep": "-",
+        "num_suffix": "", "den_suffix": "",
+        "zoom_in": 1000, "zoom_out": 7500,
+        "buffer_on": True, "buffer_size": 2.0,
+        "bg_on": False, "bg_radius": 2.0,
+    }
+
     def __init__(self, iface, parent=None):
         super().__init__(parent or iface.mainWindow())
         self.iface = iface
@@ -59,6 +75,7 @@ class MBTilesDialog(QDialog):
         self.resize(860, 650)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self._setup_ui()
+        self._load_from_qsettings()   # restore last-used values
         self._refresh_layers()
         self._refresh_ui_text()
 
@@ -896,30 +913,34 @@ class MBTilesDialog(QDialog):
 
     # ---- Reset / Save / Load Config ----
     def _reset_defaults(self):
-        """Restore all controls to factory defaults."""
-        self._stroke_color = QColor("#55ff00")
-        self._fill_color = QColor("#ffff00")
-        self._font_color = QColor("#00ffff")
-        self._buf_color = QColor("#ffffff")
-        self._bg_color = QColor("#ffaa00")
-        self.spn_stroke_w.setValue(0.5)
-        self.spn_fill_op.setValue(5)
-        self.cbo_font.setCurrentFont(QFont("Arial"))
-        self.spn_fsize.setValue(10)
-        self.chk_bold.setChecked(False)
-        self.spn_line_h.setValue(20)
-        self.spn_uline.setValue(8)
-        self.spn_spacing.setValue(5)
-        self.edt_num_sep.setText("-")
-        self.edt_den_sep.setText("-")
-        self.edt_num_sfx.setText("")
-        self.edt_den_sfx.setText("")
-        self.cbo_zoom_in.setCurrentIndex(_SCALES.index(1000))
-        self.cbo_zoom_out.setCurrentIndex(_SCALES.index(7500))
-        self.chk_buffer.setChecked(True)
-        self.spn_buf_size.setValue(2.0)
-        self.chk_bg.setChecked(False)
-        self.spn_bg_radius.setValue(2.0)
+        """Restore all controls to factory defaults and clear saved settings."""
+        d = self._FACTORY
+        self._stroke_color = QColor(d["stroke_color"])
+        self._fill_color = QColor(d["fill_color"])
+        self._font_color = QColor(d["font_color"])
+        self._buf_color = QColor(d["buf_color"])
+        self._bg_color = QColor(d["bg_color"])
+        self.spn_stroke_w.setValue(d["stroke_width"])
+        self.spn_fill_op.setValue(d["fill_opacity"])
+        self.cbo_font.setCurrentFont(QFont(d["font"]))
+        self.spn_fsize.setValue(d["font_size"])
+        self.chk_bold.setChecked(d["bold"])
+        self.spn_line_h.setValue(d["line_height"])
+        self.spn_uline.setValue(d["underline_count"])
+        self.spn_spacing.setValue(d["spacing_lines"])
+        self.edt_num_sep.setText(d["num_sep"])
+        self.edt_den_sep.setText(d["den_sep"])
+        self.edt_num_sfx.setText(d["num_suffix"])
+        self.edt_den_sfx.setText(d["den_suffix"])
+        self.cbo_zoom_in.setCurrentIndex(_SCALES.index(d["zoom_in"]))
+        self.cbo_zoom_out.setCurrentIndex(_SCALES.index(d["zoom_out"]))
+        self.chk_buffer.setChecked(d["buffer_on"])
+        self.spn_buf_size.setValue(d["buffer_size"])
+        self.chk_bg.setChecked(d["bg_on"])
+        self.spn_bg_radius.setValue(d["bg_radius"])
+        # Clear saved QSettings
+        s = QSettings()
+        s.remove(self._SETTINGS_PREFIX)
         self._update_color_buttons()
         self._update_preview()
         QMessageBox.information(self, "LVT4U",
@@ -932,31 +953,7 @@ class MBTilesDialog(QDialog):
             self, "Save Config", "", "JSON (*.json)")
         if not path:
             return
-        cfg = {
-            "stroke_color": self._stroke_color.name(),
-            "fill_color": self._fill_color.name(),
-            "font_color": self._font_color.name(),
-            "buf_color": self._buf_color.name(),
-            "bg_color": self._bg_color.name(),
-            "stroke_width": self.spn_stroke_w.value(),
-            "fill_opacity": self.spn_fill_op.value(),
-            "font": self.cbo_font.currentFont().family(),
-            "font_size": self.spn_fsize.value(),
-            "bold": self.chk_bold.isChecked(),
-            "line_height": self.spn_line_h.value(),
-            "underline_count": self.spn_uline.value(),
-            "spacing_lines": self.spn_spacing.value(),
-            "num_sep": self.edt_num_sep.text(),
-            "den_sep": self.edt_den_sep.text(),
-            "num_suffix": self.edt_num_sfx.text(),
-            "den_suffix": self.edt_den_sfx.text(),
-            "zoom_in": self.cbo_zoom_in.currentData(),
-            "zoom_out": self.cbo_zoom_out.currentData(),
-            "buffer_on": self.chk_buffer.isChecked(),
-            "buffer_size": self.spn_buf_size.value(),
-            "bg_on": self.chk_bg.isChecked(),
-            "bg_radius": self.spn_bg_radius.value(),
-        }
+        cfg = self._current_config()
         with open(path, "w", encoding="utf-8") as f:
             json.dump(cfg, f, indent=2, ensure_ascii=False)
         QMessageBox.information(self, "LVT4U",
@@ -1107,12 +1104,87 @@ class MBTilesDialog(QDialog):
         self.progress.setValue(100)
         QApplication.processEvents()
 
+        # Persist current settings for next session
+        self._save_to_qsettings()
+
         QMessageBox.information(
             self, "LVT4U",
             "Đã áp dụng kiểu dáng và nhãn!" if self.lang == 'vi'
             else "Style and labels applied!"
         )
         self.progress.setVisible(False)
+
+    # ---- QSettings Persistence ----
+    def _current_config(self):
+        """Collect current UI state into a dict."""
+        return {
+            "stroke_color": self._stroke_color.name(),
+            "fill_color": self._fill_color.name(),
+            "font_color": self._font_color.name(),
+            "buf_color": self._buf_color.name(),
+            "bg_color": self._bg_color.name(),
+            "stroke_width": self.spn_stroke_w.value(),
+            "fill_opacity": self.spn_fill_op.value(),
+            "font": self.cbo_font.currentFont().family(),
+            "font_size": self.spn_fsize.value(),
+            "bold": self.chk_bold.isChecked(),
+            "line_height": self.spn_line_h.value(),
+            "underline_count": self.spn_uline.value(),
+            "spacing_lines": self.spn_spacing.value(),
+            "num_sep": self.edt_num_sep.text(),
+            "den_sep": self.edt_den_sep.text(),
+            "num_suffix": self.edt_num_sfx.text(),
+            "den_suffix": self.edt_den_sfx.text(),
+            "zoom_in": self.cbo_zoom_in.currentData(),
+            "zoom_out": self.cbo_zoom_out.currentData(),
+            "buffer_on": self.chk_buffer.isChecked(),
+            "buffer_size": self.spn_buf_size.value(),
+            "bg_on": self.chk_bg.isChecked(),
+            "bg_radius": self.spn_bg_radius.value(),
+        }
+
+    def _save_to_qsettings(self):
+        """Persist current label settings to QSettings."""
+        s = QSettings()
+        for k, v in self._current_config().items():
+            s.setValue(self._SETTINGS_PREFIX + k, v)
+
+    def _load_from_qsettings(self):
+        """Load label settings from QSettings (fallback to factory defaults)."""
+        s = QSettings()
+        d = self._FACTORY
+        def g(key):
+            v = s.value(self._SETTINGS_PREFIX + key, d[key])
+            return v
+        self._stroke_color = QColor(str(g("stroke_color")))
+        self._fill_color = QColor(str(g("fill_color")))
+        self._font_color = QColor(str(g("font_color")))
+        self._buf_color = QColor(str(g("buf_color")))
+        self._bg_color = QColor(str(g("bg_color")))
+        self.spn_stroke_w.setValue(float(g("stroke_width")))
+        self.spn_fill_op.setValue(int(g("fill_opacity")))
+        self.cbo_font.setCurrentFont(QFont(str(g("font"))))
+        self.spn_fsize.setValue(int(g("font_size")))
+        self.chk_bold.setChecked(str(g("bold")).lower() in ('true', '1'))
+        self.spn_line_h.setValue(int(g("line_height")))
+        self.spn_uline.setValue(int(g("underline_count")))
+        self.spn_spacing.setValue(int(g("spacing_lines")))
+        self.edt_num_sep.setText(str(g("num_sep")))
+        self.edt_den_sep.setText(str(g("den_sep")))
+        self.edt_num_sfx.setText(str(g("num_suffix")))
+        self.edt_den_sfx.setText(str(g("den_suffix")))
+        zi = int(g("zoom_in"))
+        zo = int(g("zoom_out"))
+        if zi in _SCALES:
+            self.cbo_zoom_in.setCurrentIndex(_SCALES.index(zi))
+        if zo in _SCALES:
+            self.cbo_zoom_out.setCurrentIndex(_SCALES.index(zo))
+        self.chk_buffer.setChecked(str(g("buffer_on")).lower() in ('true', '1'))
+        self.spn_buf_size.setValue(float(g("buffer_size")))
+        self.chk_bg.setChecked(str(g("bg_on")).lower() in ('true', '1'))
+        self.spn_bg_radius.setValue(float(g("bg_radius")))
+        self._update_color_buttons()
+        self._update_preview()
 
     # ---- Extent ----
     def _draw_extent(self):
