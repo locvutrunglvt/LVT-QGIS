@@ -198,7 +198,6 @@ class LvtPlugin:
     # ------------------------------------------------------------------
 
     # Basemap catalog: (display_name, url, zmin, zmax)
-    # URLs verified against HCMGIS plugin (working as of 2026-04)
     _BASEMAPS = {
         "🌍 Google": [
             ("Google Maps",
