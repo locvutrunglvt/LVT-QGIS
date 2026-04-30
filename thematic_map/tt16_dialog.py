@@ -388,7 +388,9 @@ class TT16Dialog(QDialog):
         # ----------------------------------------------------------
         # Step 3: Remove categories with no matching features
         # ----------------------------------------------------------
-        self._remove_empty_categories(layer, field_name)
+        total_before, removed = self._remove_empty_categories(
+            layer, field_name
+        )
 
         # ----------------------------------------------------------
         # Step 4: Force complete refresh
@@ -398,17 +400,11 @@ class TT16Dialog(QDialog):
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
         self.iface.mapCanvas().refresh()
 
-        # Diagnostic: verify first category label
-        renderer = layer.renderer()
-        diag = ""
-        if renderer and hasattr(renderer, 'categories'):
-            cats = renderer.categories()
-            if cats:
-                diag = f" | Legend[0]: \"{cats[0].label()[:40]}\""
-
+        kept = total_before - removed
         self.iface.messageBar().pushSuccess(
             "LVT4U",
-            f"✅ {_style_label(style)} → {layer.name()} [{field_name}]{diag}"
+            f"✅ {_style_label(style)} → {layer.name()} "
+            f"[{field_name}] — {kept}/{total_before} categories shown"
         )
 
     @staticmethod
@@ -419,11 +415,18 @@ class TT16Dialog(QDialog):
           int/float 14 or 14.0 → "14"
           str "14"             → "14"
           str "TXG1"           → "TXG1"
-          NULL / None          → ""
+          NULL / None / QVariant(NULL) → ""
         """
         if val is None:
             return ""
-        # Try numeric normalization (14.0 → "14", 3.0 → "3")
+        # PyQGIS NULL check (QVariant NULL ≠ Python None)
+        try:
+            from qgis.core import NULL
+            if val == NULL:
+                return ""
+        except ImportError:
+            pass
+        # Numeric normalization: 14.0 → "14"
         try:
             f = float(val)
             if f == int(f):
@@ -433,33 +436,43 @@ class TT16Dialog(QDialog):
             return str(val).strip()
 
     def _remove_empty_categories(self, layer, field_name):
-        """Keep only categories whose value exists in the data."""
+        """Keep only categories whose value exists in the data.
+
+        Returns (total_before, removed_count).
+        """
         renderer = layer.renderer()
         if not renderer or not hasattr(renderer, 'categories'):
-            return
+            return 0, 0
 
         idx = layer.fields().indexOf(field_name)
         if idx < 0:
-            return
+            return 0, 0
 
         # Collect unique normalized values from data
         unique_vals = set()
         for feat in layer.getFeatures():
-            unique_vals.add(self._normalize(feat[idx]))
+            nv = self._normalize(feat[idx])
+            if nv:
+                unique_vals.add(nv)
 
-        # Remove unmatched categories (from end to keep indices valid)
+        # Find categories to remove
         cats = renderer.categories()
+        total = len(cats)
         to_remove = []
         for i, cat in enumerate(cats):
             cat_val = self._normalize(cat.value())
-            if cat_val not in unique_vals:
+            if not cat_val or cat_val not in unique_vals:
                 to_remove.append(i)
 
+        # Delete from end to preserve indices
         for i in sorted(to_remove, reverse=True):
             renderer.deleteCategory(i)
+
+        return total, len(to_remove)
 
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
 
 
