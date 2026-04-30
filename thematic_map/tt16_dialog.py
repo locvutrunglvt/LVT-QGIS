@@ -606,6 +606,7 @@ class TT16Dialog(QDialog):
             '<td style="width:70px;">TCVN 11565</td>',
             '<td style="width:70px;">TT16/2023</td>',
             '<td style="width:30px;">Khớp?</td>',
+            f'<td>{"Tên (VN)" if lang == "vi" else "Name (VN)"}</td>',
             f'<td>{"Tên (EN)" if lang == "vi" else "Name (EN)"}</td>',
             '</tr>',
         ]
@@ -616,6 +617,7 @@ class TT16Dialog(QDialog):
             ae_hex = ae['hex'].upper()
             tt16_entry = tt16_map.get(code)
             tt16_hex = tt16_entry['hex'].upper() if tt16_entry else '—'
+            name_vi = tt16_entry.get('name_vi', '') if tt16_entry else ''
             name_en = tt16_entry.get('name_en', '') if tt16_entry else ''
 
             match = '✅' if tt16_hex == ae_hex else '⚠️'
@@ -634,6 +636,7 @@ class TT16Dialog(QDialog):
                 f'<td><span style="background:{tt16_hex};padding:1px 10px;'
                 f'border:1px solid #ccc;">&nbsp;</span> {tt16_hex}</td>'
                 f'<td>{match}</td>'
+                f'<td style="color:#555;font-size:10px;">{name_vi}</td>'
                 f'<td style="color:#555;font-size:10px;">{name_en}</td>'
                 f'</tr>'
             )
