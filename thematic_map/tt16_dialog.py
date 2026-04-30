@@ -333,7 +333,7 @@ class TT16Dialog(QDialog):
     # Apply
     # -----------------------------------------------------------------
     # Build ID — change this to verify correct code is loaded
-    _BUILD = "v8-loadstyle"
+    _BUILD = "v9-debug"
 
     def _on_apply_clicked(self):
         layer = self.cmb_layer.currentLayer()
@@ -357,49 +357,94 @@ class TT16Dialog(QDialog):
             return
 
         from qgis.core import QgsMessageLog, Qgis
-        QgsMessageLog.logMessage(
-            f"[{self._BUILD}] Apply: style={style['id']}, "
-            f"field={field_name}, qml={qml_path}",
-            "LVT4U", Qgis.Info
+        _log = lambda m: QgsMessageLog.logMessage(
+            f"[{self._BUILD}] {m}", "LVT4U", Qgis.Info
         )
 
+        _log(f"Apply: style={style['id']}, field={field_name}")
+
         # ----------------------------------------------------------
-        # Step 1: Load QML style from file
+        # Step 1: Load QML style
         # ----------------------------------------------------------
         msg, ok = layer.loadNamedStyle(qml_path)
-        QgsMessageLog.logMessage(
-            f"[{self._BUILD}] loadNamedStyle: ok={ok}, msg={msg}",
-            "LVT4U", Qgis.Info
-        )
+        _log(f"loadNamedStyle: ok={ok}, msg={msg[:80]}")
         if not ok:
             QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
             return
 
         # ----------------------------------------------------------
-        # Step 2: Remap classify attribute if needed
+        # Step 2: Ensure classify attribute = user's field
         # ----------------------------------------------------------
-        qml_attr = style["classify_attr"]
         renderer = layer.renderer()
-        QgsMessageLog.logMessage(
-            f"[{self._BUILD}] Renderer: {type(renderer).__name__}",
-            "LVT4U", Qgis.Info
-        )
+        _log(f"Renderer: {type(renderer).__name__}")
 
-        if field_name != qml_attr:
-            if renderer and hasattr(renderer, 'setClassAttribute'):
-                renderer.setClassAttribute(field_name)
-                QgsMessageLog.logMessage(
-                    f"[{self._BUILD}] Remapped: {qml_attr} → {field_name}",
-                    "LVT4U", Qgis.Info
-                )
+        from qgis.core import QgsCategorizedSymbolRenderer
+        if not isinstance(renderer, QgsCategorizedSymbolRenderer):
+            QMessageBox.warning(
+                self, "LVT4U",
+                f"Renderer is {type(renderer).__name__}, not categorized!"
+            )
+            return
+
+        cur_attr = renderer.classAttribute()
+        _log(f"QML classAttribute: '{cur_attr}', user field: '{field_name}'")
+
+        # ALWAYS set the classify attribute to user's field
+        renderer.setClassAttribute(field_name)
+        _log(f"classAttribute set → '{renderer.classAttribute()}'")
 
         # ----------------------------------------------------------
-        # Step 3: Build NEW renderer with only matching categories
+        # Step 3: Scan data + filter categories
         # ----------------------------------------------------------
-        total, kept = self._filter_to_data(layer, field_name)
+        idx = layer.fields().indexOf(field_name)
+        _log(f"Field index: {idx}")
+        if idx < 0:
+            QMessageBox.warning(
+                self, "LVT4U", f"Field '{field_name}' not found!"
+            )
+            return
+
+        # Collect unique normalized values from data
+        unique_vals = set()
+        raw_samples = []
+        for feat in layer.getFeatures():
+            raw = feat[idx]
+            nv = self._normalize(raw)
+            if nv:
+                unique_vals.add(nv)
+            if len(raw_samples) < 5:
+                raw_samples.append(f"{raw!r}({type(raw).__name__})→'{nv}'")
+
+        _log(f"Data samples: {raw_samples}")
+        _log(f"Unique values ({len(unique_vals)}): "
+             f"{sorted(list(unique_vals))[:20]}")
+
+        # Compare with category values
+        cats = renderer.categories()
+        total = len(cats)
+        cat_samples = []
+        for cat in cats[:5]:
+            cv = cat.value()
+            cn = self._normalize(cv)
+            cat_samples.append(
+                f"{cv!r}({type(cv).__name__})→'{cn}'"
+            )
+        _log(f"Category samples: {cat_samples}")
+
+        # Build new renderer with only matching categories
+        new_cats = []
+        for cat in cats:
+            cat_val = self._normalize(cat.value())
+            if cat_val and cat_val in unique_vals:
+                new_cats.append(cat)
+
+        _log(f"Filter: {total} → {len(new_cats)} kept")
+
+        new_renderer = QgsCategorizedSymbolRenderer(field_name, new_cats)
+        layer.setRenderer(new_renderer)
 
         # ----------------------------------------------------------
-        # Step 4: Force complete refresh
+        # Step 4: Refresh
         # ----------------------------------------------------------
         layer.emitStyleChanged()
         layer.triggerRepaint()
@@ -409,7 +454,7 @@ class TT16Dialog(QDialog):
         self.iface.messageBar().pushSuccess(
             "LVT4U",
             f"✅ [{self._BUILD}] {_style_label(style)} → {layer.name()} "
-            f"[{field_name}] — {kept}/{total} categories"
+            f"[{field_name}] — {len(new_cats)}/{total} categories"
         )
 
     @staticmethod
@@ -431,87 +476,10 @@ class TT16Dialog(QDialog):
         except (ValueError, TypeError):
             return str(val).strip()
 
-    def _filter_to_data(self, layer, field_name):
-        """Build a NEW renderer with ONLY categories matching actual data.
-
-        Returns (total_before, kept_count).
-        """
-        from qgis.core import (
-            QgsCategorizedSymbolRenderer, QgsMessageLog, Qgis
-        )
-
-        renderer = layer.renderer()
-        rtype = type(renderer).__name__
-
-        # Handle wrapped renderers
-        cat_renderer = None
-        if isinstance(renderer, QgsCategorizedSymbolRenderer):
-            cat_renderer = renderer
-        elif hasattr(renderer, 'embeddedRenderer'):
-            emb = renderer.embeddedRenderer()
-            if isinstance(emb, QgsCategorizedSymbolRenderer):
-                cat_renderer = emb
-                QgsMessageLog.logMessage(
-                    f"[{self._BUILD}] Unwrapped {rtype} → "
-                    f"{type(emb).__name__}",
-                    "LVT4U", Qgis.Info
-                )
-
-        if cat_renderer is None:
-            QgsMessageLog.logMessage(
-                f"[{self._BUILD}] SKIP filter: renderer={rtype} "
-                f"is not categorized!",
-                "LVT4U", Qgis.Warning
-            )
-            return 0, 0
-
-        idx = layer.fields().indexOf(field_name)
-        if idx < 0:
-            return 0, 0
-
-        # Collect unique normalized values from data
-        unique_vals = set()
-        for feat in layer.getFeatures():
-            nv = self._normalize(feat[idx])
-            if nv:
-                unique_vals.add(nv)
-
-        QgsMessageLog.logMessage(
-            f"[{self._BUILD}] Data values ({len(unique_vals)}): "
-            f"{sorted(list(unique_vals))[:15]}...",
-            "LVT4U", Qgis.Info
-        )
-
-        # Keep only categories whose value exists in data
-        old_cats = cat_renderer.categories()
-        total = len(old_cats)
-        new_cats = []
-        for cat in old_cats:
-            cat_val = self._normalize(cat.value())
-            if cat_val and cat_val in unique_vals:
-                new_cats.append(cat)
-
-        QgsMessageLog.logMessage(
-            f"[{self._BUILD}] Categories: {total} total → "
-            f"{len(new_cats)} kept, {total - len(new_cats)} removed",
-            "LVT4U", Qgis.Info
-        )
-
-        # Build brand-new renderer
-        new_renderer = QgsCategorizedSymbolRenderer(field_name, new_cats)
-        layer.setRenderer(new_renderer)
-
-        QgsMessageLog.logMessage(
-            f"[{self._BUILD}] New renderer set with "
-            f"{len(new_cats)} categories",
-            "LVT4U", Qgis.Info
-        )
-
-        return total, len(new_cats)
-
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
 
 
 
