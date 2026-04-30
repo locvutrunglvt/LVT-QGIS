@@ -371,11 +371,13 @@ class TT16Dialog(QDialog):
         # Re-trigger style info and field auto-detect
         if self.cmb_style.count() > 0:
             self._on_style_changed(0)
+        # Update ref table colours to match selected standard
+        self._populate_ref_table()
 
     def _build_ref_tab(self, parent):
         ly = QVBoxLayout(parent)
 
-        self.lbl_table = QLabel("📋  LDLR — 93 codes / 93 mã loại đất loại rừng")
+        self.lbl_table = QLabel()
         self.lbl_table.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.lbl_table.setStyleSheet("padding:2px 0;")
         ly.addWidget(self.lbl_table)
@@ -404,13 +406,34 @@ class TT16Dialog(QDialog):
         self._populate_ref_table()
 
     def _populate_ref_table(self):
-        """Fill the reference table with all 93 codes — bilingual."""
+        """Fill the reference table with all 93 codes — bilingual.
+        Uses colour from selected standard (New=TT16, Old=TCVN)."""
+        is_new = self.rb_new.isChecked()
+        std_tag = "🆕 TT 16/2023" if is_new else "📗 TCVN 11565:2016"
+        self.lbl_table.setText(
+            f"📋  LDLR — 93 mã  |  Màu theo: {std_tag}"
+        )
+
+        # Build TCVN colour override map
+        tcvn_hex = {}
+        if not is_new:
+            ae_path = os.path.join(_DATA_DIR, 'tcvn11565_appendix_e.json')
+            try:
+                with open(ae_path, 'r', encoding='utf-8') as f:
+                    ae_data = json.load(f)
+                for ac in ae_data.get('codes', []):
+                    tcvn_hex[ac['code']] = ac['hex']
+            except Exception:
+                pass
+
         codes = self._master["codes"]
         self.tbl.setRowCount(len(codes))
 
         for i, c in enumerate(codes):
+            tc = str(c.get("text_code", ""))
+
             # Col 0: LDLR text code
-            it0 = QTableWidgetItem(str(c.get("text_code", "")))
+            it0 = QTableWidgetItem(tc)
             it0.setTextAlignment(Qt.AlignCenter)
             self.tbl.setItem(i, 0, it0)
 
@@ -419,9 +442,10 @@ class TT16Dialog(QDialog):
             it1.setTextAlignment(Qt.AlignCenter)
             self.tbl.setItem(i, 1, it1)
 
-            # Col 2: Colour swatch
+            # Col 2: Colour swatch — from selected standard
+            hex_c = tcvn_hex.get(tc, c["hex"]) if not is_new else c["hex"]
             px = QPixmap(20, 14)
-            clr = QColor(c["hex"])
+            clr = QColor(hex_c)
             px.fill(clr)
             p = QPainter(px)
             p.setPen(QColor(120, 120, 120))
@@ -443,7 +467,7 @@ class TT16Dialog(QDialog):
             ))
 
             # Col 5: HEX
-            hi = QTableWidgetItem(c["hex"])
+            hi = QTableWidgetItem(hex_c)
             hi.setTextAlignment(Qt.AlignCenter)
             hi.setForeground(QColor(100, 100, 100))
             self.tbl.setItem(i, 5, hi)
@@ -507,8 +531,19 @@ class TT16Dialog(QDialog):
                 f'<h4 style="color:{color};margin:8px 0 4px 0;">'
                 f'{grp_name}</h4>'
             )
-            html.append('<table cellspacing="0" cellpadding="2" '
-                        'style="margin-left:12px;border-collapse:collapse;">')
+            # Column header for this group
+            vol_hdr = 'Trữ lượng/ha (m³/ha)' if lang == 'vi' else 'Volume/ha (m³/ha)'
+            html.append(
+                '<table cellspacing="0" cellpadding="2" '
+                'style="margin-left:12px;border-collapse:collapse;">'
+                '<tr style="background:#f5f5f5;">'
+                '<td style="width:60px;font-weight:bold;color:#666;">Mã</td>'
+                '<td style="width:30px;"></td>'
+                f'<td style="color:#666;font-weight:bold;">'
+                f'{"Tên loại đất loại rừng" if lang == "vi" else "Land/forest type"}</td>'
+                f'<td style="color:#0d47a1;font-weight:bold;padding-left:12px;">{vol_hdr}</td>'
+                '</tr>'
+            )
             for tc in grp_codes.split(','):
                 tc = tc.strip()
                 c = code_map.get(tc)
@@ -564,13 +599,14 @@ class TT16Dialog(QDialog):
             'So sánh với TT 16/2023 (mới)',
             '</p><hr>',
             '<table cellspacing="0" cellpadding="3" '
-            'style="border-collapse:collapse;width:100%;">',
+            'style="border-collapse:collapse;width:100%;font-size:11px;">',
             '<tr style="background:#e8f5e9;font-weight:bold;">',
-            '<td style="width:30px;">STT</td>',
-            '<td style="width:60px;">Mã</td>',
+            '<td style="width:28px;">STT</td>',
+            '<td style="width:55px;">Mã</td>',
             '<td style="width:70px;">TCVN 11565</td>',
             '<td style="width:70px;">TT16/2023</td>',
-            '<td>Khớp?</td>',
+            '<td style="width:30px;">Khớp?</td>',
+            f'<td>{"Tên (EN)" if lang == "vi" else "Name (EN)"}</td>',
             '</tr>',
         ]
 
@@ -580,6 +616,7 @@ class TT16Dialog(QDialog):
             ae_hex = ae['hex'].upper()
             tt16_entry = tt16_map.get(code)
             tt16_hex = tt16_entry['hex'].upper() if tt16_entry else '—'
+            name_en = tt16_entry.get('name_en', '') if tt16_entry else ''
 
             match = '✅' if tt16_hex == ae_hex else '⚠️'
             if tt16_hex != ae_hex and tt16_hex != '—':
@@ -597,6 +634,7 @@ class TT16Dialog(QDialog):
                 f'<td><span style="background:{tt16_hex};padding:1px 10px;'
                 f'border:1px solid #ccc;">&nbsp;</span> {tt16_hex}</td>'
                 f'<td>{match}</td>'
+                f'<td style="color:#555;font-size:10px;">{name_en}</td>'
                 f'</tr>'
             )
 
