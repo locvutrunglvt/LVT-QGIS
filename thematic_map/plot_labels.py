@@ -54,3 +54,102 @@ class PlotLabelsDialog(MBTilesDialog):
             self.tabs.setTabText(0, "Nhãn lô rừng")
         else:
             self.tabs.setTabText(0, "Plot Labels")
+
+    def _apply_to_layer(self):
+        """Apply ONLY labels — no polygon styling (stroke/fill).
+
+        Overrides the parent MBTilesDialog._apply_to_layer to skip
+        polygon renderer changes, preserving any existing thematic map
+        styling on the layer.
+        """
+        layer = self._get_layer()
+        if not layer:
+            from qgis.PyQt.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "LVT4U", self._t("No vector layer."))
+            return
+
+        from qgis.PyQt.QtWidgets import QApplication, QMessageBox
+        self.progress.setVisible(True)
+        self.progress.setValue(0)
+        self.progress.setFormat("Applying labels... %p%")
+        QApplication.processEvents()
+
+        # Skip polygon styling entirely — only apply labels
+        self.progress.setValue(40)
+        QApplication.processEvents()
+
+        if self.chk_show_label.isChecked():
+            expr = self._build_expression()
+            if expr:
+                from qgis.core import (
+                    QgsPalLayerSettings, QgsVectorLayerSimpleLabeling,
+                    QgsTextFormat, QgsTextBufferSettings, QgsUnitTypes,
+                )
+                from qgis.PyQt.QtCore import QSizeF
+
+                s = QgsPalLayerSettings()
+                s.fieldName = expr
+                s.isExpression = True
+                s.scaleVisibility = True
+                s.maximumScale = self.cbo_zoom_in.currentData()
+                s.minimumScale = self.cbo_zoom_out.currentData()
+
+                fmt = QgsTextFormat()
+                font = self.cbo_font.currentFont()
+                font.setPointSize(self.spn_fsize.value())
+                font.setBold(self.chk_bold.isChecked())
+                fmt.setFont(font)
+                fmt.setColor(self._font_color)
+                fmt.setSize(self.spn_fsize.value())
+
+                lh_pct = self.spn_line_h.value() / 100.0
+                try:
+                    fmt.setLineHeightUnit(QgsUnitTypes.RenderPercentage)
+                    fmt.setLineHeight(lh_pct)
+                except Exception:
+                    try:
+                        from qgis.core import Qgis
+                        fmt.setLineHeightUnit(Qgis.RenderUnit.Percentage)
+                        fmt.setLineHeight(lh_pct)
+                    except Exception:
+                        fmt.setLineHeight(lh_pct)
+
+                buf = QgsTextBufferSettings()
+                buf.setEnabled(self.chk_buffer.isChecked())
+                buf.setSize(self.spn_buf_size.value())
+                buf.setColor(self._buf_color)
+                fmt.setBuffer(buf)
+
+                if self.chk_bg.isChecked():
+                    from qgis.core import QgsTextBackgroundSettings
+                    bg = QgsTextBackgroundSettings()
+                    bg.setEnabled(True)
+                    bg.setType(QgsTextBackgroundSettings.ShapeRectangle)
+                    bg.setSizeType(QgsTextBackgroundSettings.SizeBuffer)
+                    bg.setSize(QSizeF(1, 0.5))
+                    bg.setFillColor(self._bg_color)
+                    r = self.spn_bg_radius.value()
+                    bg.setRadii(QSizeF(r, r))
+                    fmt.setBackground(bg)
+
+                s.setFormat(fmt)
+                layer.setLabeling(QgsVectorLayerSimpleLabeling(s))
+                layer.setLabelsEnabled(True)
+
+        self.progress.setValue(80)
+        QApplication.processEvents()
+
+        layer.triggerRepaint()
+        self.iface.mapCanvas().refresh()
+
+        self.progress.setValue(100)
+        QApplication.processEvents()
+
+        self._save_to_qsettings()
+
+        QMessageBox.information(
+            self, "LVT4U",
+            "Đã áp dụng nhãn lô!" if self.lang == 'vi'
+            else "Plot labels applied!"
+        )
+        self.progress.setVisible(False)
