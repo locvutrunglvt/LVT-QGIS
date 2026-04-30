@@ -373,8 +373,11 @@ class TT16Dialog(QDialog):
                     if emb and hasattr(emb, 'setClassAttribute'):
                         emb.setClassAttribute(field_name)
 
+        # Force full refresh: style → legend → canvas
+        layer.emitStyleChanged()
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+        self.iface.mapCanvas().refresh()
 
         if not silent:
             self.iface.messageBar().pushSuccess(
