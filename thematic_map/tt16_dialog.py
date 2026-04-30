@@ -333,7 +333,7 @@ class TT16Dialog(QDialog):
     # Apply
     # -----------------------------------------------------------------
     # Build ID — change this to verify correct code is loaded
-    _BUILD = "v7-newrenderer"
+    _BUILD = "v8-loadstyle"
 
     def _on_apply_clicked(self):
         layer = self.cmb_layer.currentLayer()
@@ -359,29 +359,20 @@ class TT16Dialog(QDialog):
         from qgis.core import QgsMessageLog, Qgis
         QgsMessageLog.logMessage(
             f"[{self._BUILD}] Apply: style={style['id']}, "
-            f"field={field_name}, qml={style['qml']}",
+            f"field={field_name}, qml={qml_path}",
             "LVT4U", Qgis.Info
         )
 
         # ----------------------------------------------------------
-        # Step 1: Load QML via QDomDocument
+        # Step 1: Load QML style from file
         # ----------------------------------------------------------
-        from qgis.PyQt.QtXml import QDomDocument
-
-        doc = QDomDocument()
-        with open(qml_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        success, err_msg, err_line, err_col = doc.setContent(content)
-        if not success:
-            QMessageBox.critical(
-                self, "LVT4U",
-                f"QML parse error at line {err_line}:\n{err_msg}"
-            )
-            return
-
-        msg, ok = layer.importNamedStyle(doc)
+        msg, ok = layer.loadNamedStyle(qml_path)
+        QgsMessageLog.logMessage(
+            f"[{self._BUILD}] loadNamedStyle: ok={ok}, msg={msg}",
+            "LVT4U", Qgis.Info
+        )
         if not ok:
-            QMessageBox.warning(self, "LVT4U", f"Import failed:\n{msg}")
+            QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
             return
 
         # ----------------------------------------------------------
@@ -390,7 +381,7 @@ class TT16Dialog(QDialog):
         qml_attr = style["classify_attr"]
         renderer = layer.renderer()
         QgsMessageLog.logMessage(
-            f"[{self._BUILD}] Renderer type: {type(renderer).__name__}",
+            f"[{self._BUILD}] Renderer: {type(renderer).__name__}",
             "LVT4U", Qgis.Info
         )
 
