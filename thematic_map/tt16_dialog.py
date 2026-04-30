@@ -740,14 +740,17 @@ class TT16Dialog(QDialog):
 
         # 2. Apply labels from embedded PlotLabelsDialog
         if hasattr(self, '_label_dlg') and self._label_dlg is not None:
-            # Sync layer: set the embedded dialog's layer to match TT16
             layer = self.cmb_layer.currentLayer()
             if layer:
-                idx = self._label_dlg.cbo_layer.findText(layer.name())
-                if idx >= 0:
-                    self._label_dlg.cbo_layer.setCurrentIndex(idx)
-            # Apply labels (uses overridden pure-label method)
-            self._label_dlg._apply_to_layer()
+                # Ensure embedded dialog's layer list is populated
+                self._label_dlg.refresh_layers()
+                # Find and select the same layer in the embedded dialog
+                for i in range(self._label_dlg.cbo_layer.count()):
+                    if self._label_dlg.cbo_layer.itemData(i) == layer.id():
+                        self._label_dlg.cbo_layer.setCurrentIndex(i)
+                        break
+                # Apply labels (uses overridden pure-label method)
+                self._label_dlg._apply_to_layer()
 
     # -----------------------------------------------------------------
     # Events
