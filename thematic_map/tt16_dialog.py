@@ -386,11 +386,9 @@ class TT16Dialog(QDialog):
                 renderer.setClassAttribute(field_name)
 
         # ----------------------------------------------------------
-        # Step 3: Remove categories with no matching features
+        # Step 3: Build NEW renderer with only matching categories
         # ----------------------------------------------------------
-        total_before, removed = self._remove_empty_categories(
-            layer, field_name
-        )
+        total, kept = self._filter_to_data(layer, field_name)
 
         # ----------------------------------------------------------
         # Step 4: Force complete refresh
@@ -400,11 +398,10 @@ class TT16Dialog(QDialog):
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
         self.iface.mapCanvas().refresh()
 
-        kept = total_before - removed
         self.iface.messageBar().pushSuccess(
             "LVT4U",
             f"✅ {_style_label(style)} → {layer.name()} "
-            f"[{field_name}] — {kept}/{total_before} categories shown"
+            f"[{field_name}] — {kept}/{total} categories"
         )
 
     @staticmethod
@@ -419,14 +416,12 @@ class TT16Dialog(QDialog):
         """
         if val is None:
             return ""
-        # PyQGIS NULL check (QVariant NULL ≠ Python None)
         try:
             from qgis.core import NULL
             if val == NULL:
                 return ""
         except ImportError:
             pass
-        # Numeric normalization: 14.0 → "14"
         try:
             f = float(val)
             if f == int(f):
@@ -435,13 +430,19 @@ class TT16Dialog(QDialog):
         except (ValueError, TypeError):
             return str(val).strip()
 
-    def _remove_empty_categories(self, layer, field_name):
-        """Keep only categories whose value exists in the data.
+    def _filter_to_data(self, layer, field_name):
+        """Create a new renderer containing ONLY categories with data.
 
-        Returns (total_before, removed_count).
+        Instead of deleting categories (unreliable), builds a brand-new
+        QgsCategorizedSymbolRenderer from scratch with only the matching
+        categories.
+
+        Returns (total_before, kept_count).
         """
+        from qgis.core import QgsCategorizedSymbolRenderer
+
         renderer = layer.renderer()
-        if not renderer or not hasattr(renderer, 'categories'):
+        if not isinstance(renderer, QgsCategorizedSymbolRenderer):
             return 0, 0
 
         idx = layer.fields().indexOf(field_name)
@@ -455,24 +456,25 @@ class TT16Dialog(QDialog):
             if nv:
                 unique_vals.add(nv)
 
-        # Find categories to remove
-        cats = renderer.categories()
-        total = len(cats)
-        to_remove = []
-        for i, cat in enumerate(cats):
+        # Keep only categories whose value exists in data
+        old_cats = renderer.categories()
+        total = len(old_cats)
+        new_cats = []
+        for cat in old_cats:
             cat_val = self._normalize(cat.value())
-            if not cat_val or cat_val not in unique_vals:
-                to_remove.append(i)
+            if cat_val and cat_val in unique_vals:
+                new_cats.append(cat)
 
-        # Delete from end to preserve indices
-        for i in sorted(to_remove, reverse=True):
-            renderer.deleteCategory(i)
+        # Build brand-new renderer with filtered categories
+        new_renderer = QgsCategorizedSymbolRenderer(field_name, new_cats)
+        layer.setRenderer(new_renderer)
 
-        return total, len(to_remove)
+        return total, len(new_cats)
 
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
 
 
 
