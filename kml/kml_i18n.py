@@ -3,7 +3,7 @@
 def tr(key, lang='vi'):
     data = {
         'vi': {
-            'plugin_title': 'LVT have KML view - Công cụ KML chuyên nghiệp',
+            'plugin_title': 'LVT4U KML view - Công cụ KML chuyên nghiệp',
             'tab_shp2kml': 'Chuyển SHP → KML',
             'tab_kml2shp': 'Bung KML → SHP',
             'tab_help': 'Hướng dẫn',
@@ -27,7 +27,7 @@ def tr(key, lang='vi'):
             'help_title': 'HƯỚNG DẪN SỬ DỤNG CHI TIẾT',
         },
         'en': {
-            'plugin_title': 'LVT have KML view - Professional KML Tool',
+            'plugin_title': 'LVT4U KML view - Professional KML Tool',
             'tab_shp2kml': 'Convert SHP → KML',
             'tab_kml2shp': 'Extract KML → SHP',
             'tab_help': 'Guide',

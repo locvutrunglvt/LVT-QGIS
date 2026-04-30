@@ -26,7 +26,7 @@ class PreviewDialog(QDialog):
         self.current_index = 0
         self.html_builder = HtmlTemplateBuilder(config)
 
-        self.setWindowTitle('Preview Popup - LVT have KML view')
+        self.setWindowTitle('Preview Popup - LVT4U KML view')
         self.setMinimumSize(480, 420)
         self._setup_ui()
         self._update_preview()

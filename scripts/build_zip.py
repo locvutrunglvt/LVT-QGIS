@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-LVT Plugin — Build ZIP for Release.
+LVT4U Plugin — Build ZIP for Release.
 
 Creates a distributable ZIP file containing only the files
 needed for end-user installation via QGIS Plugin Manager.
@@ -9,7 +9,7 @@ Usage:
     python build_zip.py
 
 Output:
-    LVT_v{version}.zip in the parent directory.
+    LVT4U_v{version}.zip in the parent directory.
 
 Author: Lộc Vũ Trung (LVT) / Slow Forest
 """
@@ -23,8 +23,13 @@ EXCLUDE_DIRS = {
     "__pycache__",
     ".git",
     ".vscode",
-    "scripts",
     ".idea",
+    "scripts",
+}
+
+EXCLUDE_FILES = {
+    ".gitignore",
+    "LVT4U.code-workspace",
 }
 
 EXCLUDE_EXTENSIONS = {
@@ -50,9 +55,18 @@ def should_include(path, root_dir):
         if part in EXCLUDE_DIRS:
             return False
 
+    # Exclude specific files
+    basename = os.path.basename(path)
+    if basename in EXCLUDE_FILES:
+        return False
+
     # Exclude by extension
     _, ext = os.path.splitext(path)
     if ext in EXCLUDE_EXTENSIONS:
+        return False
+
+    # Exclude icons/README.md (dev-only doc)
+    if rel == os.path.join("icons", "README.md"):
         return False
 
     return True
@@ -62,7 +76,7 @@ def build_zip():
     """Create the release ZIP file."""
     plugin_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     version = get_version(plugin_dir)
-    zip_name = f"LVT_v{version}.zip"
+    zip_name = f"LVT4U_v{version}.zip"
     zip_path = os.path.join(os.path.dirname(plugin_dir), zip_name)
 
     file_count = 0

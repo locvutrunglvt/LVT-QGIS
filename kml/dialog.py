@@ -174,7 +174,7 @@ class LvtKmlViewDialog(QDialog):
         ly.addStretch()
 
     def _refresh_ui_text(self):
-        self.setWindowTitle("LVT have KML view _V013")
+        self.setWindowTitle("LVT4U KML view")
         self.btn_lang.setText("🌐 " + ("English" if self.lang == 'vi' else "Tiếng Việt"))
         is_vi = self.lang == 'vi'
         

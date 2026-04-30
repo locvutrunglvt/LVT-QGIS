@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-LVT Plugin Suite — Menu Coordinator.
+LVT4U Plugin Suite — Menu Coordinator.
 
-Creates the top-level "LVT" menu on the QGIS menu bar and registers
+Creates the top-level "LVT4U" menu on the QGIS menu bar and registers
 all sub-module actions. Each module is loaded on-demand when the user
 clicks the corresponding menu item.
 
@@ -32,7 +32,7 @@ class LvtPlugin:
         - Lazy-load module dialogs on first use
     """
 
-    PLUGIN_NAME = "LVT"
+    PLUGIN_NAME = "LVT4U"
 
     def __init__(self, iface):
         """Initialize the plugin.
@@ -141,9 +141,20 @@ class LvtPlugin:
 
         self.lvt_menu.addSeparator()
 
+        # --- EUDR (submenu) ---
+        eudr_sub = self._add_submenu("eudr.png", "EUDR")
+        self._add_action(
+            "eudr.png", "Export GeoJSON", self._open_eudr, eudr_sub
+        )
+        self._add_action(
+            "eudr.png", "Reference Documents",
+            self._open_eudr_reference, eudr_sub
+        )
+
+        self.lvt_menu.addSeparator()
+
         # --- Data Tools ---
         self._add_action("mbtiles.png", "Create MBTiles", self._open_mbtiles)
-        self._add_action("eudr.png", "Create GeoJSON EUDR", self._open_eudr)
         self._add_action("package.png", "Package Map", self._open_packager)
 
         self.lvt_menu.addSeparator()
@@ -236,11 +247,38 @@ class LvtPlugin:
 
     def _open_mbtiles(self):
         """Open the MBTiles creator dialog."""
-        self._show_placeholder("Create MBTiles")
+        if "mbtiles" not in self._dialogs:
+            from .mbtiles.dialog import MBTilesDialog
+            self._dialogs["mbtiles"] = MBTilesDialog(self.iface)
+
+        dlg = self._dialogs["mbtiles"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_eudr(self):
         """Open the EUDR GeoJSON exporter dialog."""
-        self._show_placeholder("GeoJSON EUDR")
+        if "eudr" not in self._dialogs:
+            from .eudr.dialog import EudrExportDialog
+            self._dialogs["eudr"] = EudrExportDialog(self.iface)
+
+        dlg = self._dialogs["eudr"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def _open_eudr_reference(self):
+        """Open the EUDR Reference Documents dialog."""
+        if "eudr_ref" not in self._dialogs:
+            from .eudr.reference_dialog import EudrReferenceDialog
+            self._dialogs["eudr_ref"] = EudrReferenceDialog(self.iface)
+
+        dlg = self._dialogs["eudr_ref"]
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_packager(self):
         """Open the Map Packager dialog."""
@@ -314,7 +352,7 @@ class LvtPlugin:
             module_name: Human-readable name of the module.
         """
         self.iface.messageBar().pushInfo(
-            "LVT",
+            "LVT4U",
             tr("{module} — Coming soon!").format(module=module_name),
         )
 
@@ -338,7 +376,7 @@ class LvtPlugin:
         existing = QgsProject.instance().mapLayersByName(name)
         if existing:
             self.iface.messageBar().pushInfo(
-                "LVT",
+                "LVT4U",
                 tr("{name} is already loaded.").format(name=name),
             )
             return
@@ -347,11 +385,11 @@ class LvtPlugin:
         if layer.isValid():
             QgsProject.instance().addMapLayer(layer)
             self.iface.messageBar().pushSuccess(
-                "LVT",
+                "LVT4U",
                 tr("{name} added successfully.").format(name=name),
             )
         else:
             self.iface.messageBar().pushWarning(
-                "LVT",
+                "LVT4U",
                 tr("Failed to load {name}.").format(name=name),
             )

@@ -15,7 +15,7 @@ License: GPL-3.0
 from qgis.PyQt.QtCore import QSettings
 
 # QSettings key for persisting the language choice
-_SETTINGS_KEY = "LVT/language"
+_SETTINGS_KEY = "LVT4U/language"
 
 # Default language
 _DEFAULT_LANG = "en"
@@ -30,6 +30,9 @@ _TRANSLATIONS = {
     "KML/KMZ → SHP": "KML/KMZ → SHP",
     "Create MBTiles": "Tạo MBTiles",
     "Create GeoJSON EUDR": "Tạo GeoJSON EUDR",
+    "EUDR": "EUDR",
+    "Export GeoJSON": "Xuất GeoJSON",
+    "Reference Documents": "Tài liệu tham khảo",
     "Package Map": "Đóng gói bản đồ",
     "Thematic Map": "Bản đồ chuyên đề",
     "Circular 16/2023": "Theo TT 16/2023",
