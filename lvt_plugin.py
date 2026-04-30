@@ -289,8 +289,16 @@ class LvtPlugin:
         self._show_placeholder("Thematic Map — TT 16/2023")
 
     def _open_thematic_labels(self):
-        """Open the Plot Labels dialog."""
-        self._show_placeholder("Plot Labels")
+        """Open the standalone Plot Labels dialog."""
+        if "plot_labels" not in self._dialogs:
+            from .thematic_map.plot_labels import PlotLabelsDialog
+            self._dialogs["plot_labels"] = PlotLabelsDialog(self.iface)
+
+        dlg = self._dialogs["plot_labels"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _load_basemap_maps(self):
         """Add Google Maps basemap to the current project."""
