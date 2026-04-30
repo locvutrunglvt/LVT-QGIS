@@ -227,12 +227,7 @@ class FontConverterDialog(QDialog):
             self.progress.setVisible(False)
 
     def _export(self, layer, path, driver, ext, mode, target_crs):
-        """Convert text fields, then write to file.
-
-        SHP: uses QgsVectorFileWriter with UTF-8 + .cpg
-        TAB: uses osgeo.ogr directly with latin-1 encoding to preserve
-             ALL byte values (including 0xAD soft-hyphen = TCVN3 'ư').
-        """
+        """Convert text fields in memory, then write using QgsVectorFileWriter."""
         # Identify string fields
         fields_list = []
         for field in layer.fields():
@@ -253,9 +248,24 @@ class FontConverterDialog(QDialog):
         self.log.append(f"💾 Format: {driver}")
         QApplication.processEvents()
 
-        # --- Convert all text values first ---
+        # --- Write features with QgsVectorFileWriter (UTF-8) ---
+        writer = QgsVectorFileWriter(
+            path, "UTF-8",
+            layer.fields(), layer.wkbType(), layer.crs(),
+            driver
+        )
+
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
+            QMessageBox.critical(self, "Error", writer.errorMessage())
+            del writer
+            return
+
         converted_count = 0
-        for feat in features:
+        for i, feat in enumerate(features):
+            self.progress.setValue(i + 1)
+
+            # Convert text fields
             if mode < 3:
                 for fn in fields_list:
                     old_val = feat[fn]
@@ -272,24 +282,29 @@ class FontConverterDialog(QDialog):
                             converted_count += 1
                             feat[fn] = new_val
 
+            writer.addFeature(feat)
+
+        del writer  # Close and flush
+
         self.log.append(f"🔤 Converted: {converted_count} values")
-        QApplication.processEvents()
-
-        # --- Write to file ---
-        if driver == "MapInfo File":
-            self._write_tab(layer, features, path)
-        else:
-            self._write_shp(layer, features, path)
-
         self.progress.setValue(total + 2)
         QApplication.processEvents()
 
-        # --- Load result ---
-        load_enc = "latin-1" if driver == "MapInfo File" else "UTF-8"
+        # --- Write .cpg file for SHP ---
+        if driver == "ESRI Shapefile":
+            cpg_path = os.path.splitext(path)[0] + ".cpg"
+            try:
+                with open(cpg_path, 'w') as f:
+                    f.write("UTF-8")
+                self.log.append(f"📄 Created {os.path.basename(cpg_path)} (UTF-8)")
+            except Exception as e:
+                self.log.append(f"⚠️ Could not write .cpg: {e}")
+
+        # --- Load result & set encoding ---
         try:
             result_layer = QgsVectorLayer(path, os.path.basename(path).replace(ext, ''), 'ogr')
             result_layer.setProviderEncoding('System')
-            result_layer.dataProvider().setEncoding(load_enc)
+            result_layer.dataProvider().setEncoding('UTF-8')
             if result_layer.isValid():
                 QgsProject.instance().addMapLayer(result_layer)
                 self.log.append(f"✅ Added to project: {result_layer.name()}")
@@ -305,15 +320,15 @@ class FontConverterDialog(QDialog):
             f"   CRS: {crs_str}\n"
             f"   Features: {total}\n"
             f"   Font conversions: {converted_count}\n"
-            f"   Encoding: {load_enc}"
+            f"   Encoding: UTF-8"
         )
 
         tip = ""
-        if mode == 2 and driver == "MapInfo File":
+        if mode == 2:
             tip = (
                 "\n💡 Mở trong MapInfo:\n"
                 "   Font: .VnTime / .VnArial\n"
-                "   Dữ liệu đã encode WindowsLatin1 — mở trực tiếp!"
+                "   Encoding: UTF-8 (tự động)"
             )
 
         QMessageBox.information(
@@ -324,106 +339,6 @@ class FontConverterDialog(QDialog):
             f"Font conversions: {converted_count}"
             + tip
         )
-
-    def _write_shp(self, layer, features, path):
-        """Write SHP with QgsVectorFileWriter + UTF-8 + .cpg."""
-        writer = QgsVectorFileWriter(
-            path, "UTF-8",
-            layer.fields(), layer.wkbType(), layer.crs(),
-            "ESRI Shapefile"
-        )
-        if writer.hasError() != QgsVectorFileWriter.NoError:
-            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
-            del writer
-            return
-        for i, feat in enumerate(features):
-            self.progress.setValue(i + 1)
-            writer.addFeature(feat)
-        del writer
-
-        cpg_path = os.path.splitext(path)[0] + ".cpg"
-        try:
-            with open(cpg_path, 'w') as f:
-                f.write("UTF-8")
-            self.log.append(f"📄 Created {os.path.basename(cpg_path)} (UTF-8)")
-        except Exception as e:
-            self.log.append(f"⚠️ Could not write .cpg: {e}")
-
-    def _write_tab(self, layer, features, path):
-        """Write TAB: QgsVectorFileWriter (UTF-8) + binary re-encode.
-
-        Step 1: Write TAB with UTF-8 (preserves ALL chars including U+00AD)
-        Step 2: Re-encode .DAT text data from UTF-8 → latin-1 single bytes
-        Step 3: Patch .TAB header charset: UTF-8 → WindowsLatin1
-
-        This ensures MapInfo reads the file natively with .VnTime font.
-        """
-        self.log.append("📝 Writing TAB (QgsVectorFileWriter + re-encode)")
-
-        # Step 1: Write with QgsVectorFileWriter (UTF-8)
-        writer = QgsVectorFileWriter(
-            path, "UTF-8",
-            layer.fields(), layer.wkbType(), layer.crs(),
-            "MapInfo File"
-        )
-        if writer.hasError() != QgsVectorFileWriter.NoError:
-            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
-            del writer
-            return
-        for i, feat in enumerate(features):
-            self.progress.setValue(i + 1)
-            writer.addFeature(feat)
-        del writer
-
-        # Step 2: Re-encode .DAT file from UTF-8 to latin-1
-        dat_path = os.path.splitext(path)[0] + '.dat'
-        if os.path.exists(dat_path):
-            try:
-                with open(dat_path, 'rb') as f:
-                    data = f.read()
-
-                # Replace UTF-8 two-byte sequences (C2 80..C3 BF) with
-                # their single-byte latin-1 equivalents (80..FF).
-                # UTF-8: C2 xx -> byte xx (for 0x80-0xBF)
-                # UTF-8: C3 xx -> byte (xx + 0x40) (for 0xC0-0xFF)
-                out = bytearray()
-                idx = 0
-                n_fixed = 0
-                while idx < len(data):
-                    b = data[idx]
-                    if b == 0xC2 and idx + 1 < len(data) and 0x80 <= data[idx+1] <= 0xBF:
-                        out.append(data[idx+1])
-                        idx += 2
-                        n_fixed += 1
-                    elif b == 0xC3 and idx + 1 < len(data) and 0x80 <= data[idx+1] <= 0xBF:
-                        out.append(data[idx+1] + 0x40)
-                        idx += 2
-                        n_fixed += 1
-                    else:
-                        out.append(b)
-                        idx += 1
-
-                if n_fixed > 0:
-                    with open(dat_path, 'wb') as f:
-                        f.write(bytes(out))
-                    self.log.append(f"🔧 Re-encoded {n_fixed} chars (UTF-8 → latin-1) in .DAT")
-            except Exception as e:
-                self.log.append(f"⚠️ Could not re-encode .DAT: {e}")
-
-        # Step 3: Patch .TAB header charset
-        if os.path.exists(path):
-            try:
-                with open(path, 'r', encoding='ascii', errors='replace') as f:
-                    header = f.read()
-                patched = header.replace('Charset "UTF-8"', 'Charset "WindowsLatin1"')
-                if patched != header:
-                    with open(path, 'w', encoding='ascii', errors='replace') as f:
-                        f.write(patched)
-                    self.log.append('📝 Patched .TAB charset: UTF-8 → WindowsLatin1')
-            except Exception as e:
-                self.log.append(f"⚠️ Could not patch .TAB header: {e}")
-
-        self.log.append(f"✅ TAB file written: {os.path.basename(path)}")
 
     # ═══════════════════════════════════════════════════════════════
     # Conversion engines (index-based parallel list approach)
