@@ -96,7 +96,9 @@ class TT16Dialog(QDialog):
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self.setMinimumWidth(720)
         self._master = _load_master()
+        self._ready = False
         self._build_ui()
+        self._ready = True
 
     # -----------------------------------------------------------------
     # UI
@@ -298,6 +300,10 @@ class TT16Dialog(QDialog):
         style_lang = style.get("lang", current_language())
         self._populate_table(lang=style_lang)
 
+        # Auto-apply to layer so the QGIS legend updates immediately
+        if self._ready:
+            self._apply_style(silent=True)
+
     def _try_auto_field(self):
         """Auto-select matching field based on style hint."""
         style = self.cmb_style.currentData()
@@ -328,10 +334,11 @@ class TT16Dialog(QDialog):
     # Apply
     # -----------------------------------------------------------------
 
-    def _apply_style(self):
+    def _apply_style(self, silent=False):
         layer = self.cmb_layer.currentLayer()
         if not layer:
-            QMessageBox.warning(self, "LVT4U", "Chọn layer trước!")
+            if not silent:
+                QMessageBox.warning(self, "LVT4U", "Chọn layer trước!")
             return
 
         style = self.cmb_style.currentData()
@@ -342,13 +349,15 @@ class TT16Dialog(QDialog):
         qml_path = os.path.join(_QML_DIR, style["qml"])
 
         if not os.path.isfile(qml_path):
-            QMessageBox.critical(self, "LVT4U", f"QML not found:\n{qml_path}")
+            if not silent:
+                QMessageBox.critical(self, "LVT4U", f"QML not found:\n{qml_path}")
             return
 
         # Load QML style
         msg, ok = layer.loadNamedStyle(qml_path)
         if not ok:
-            QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
+            if not silent:
+                QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
             return
 
         # Remap attribute if different from hint
@@ -364,10 +373,12 @@ class TT16Dialog(QDialog):
 
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
-        self.iface.messageBar().pushSuccess(
-            "LVT4U",
-            f"✅ Applied \"{_style_name(style)}\" → {layer.name()}"
-        )
+
+        if not silent:
+            self.iface.messageBar().pushSuccess(
+                "LVT4U",
+                f"✅ Applied \"{_style_name(style)}\" → {layer.name()}"
+            )
 
     def refresh_layers(self):
         """Called by menu launcher."""
