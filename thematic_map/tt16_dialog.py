@@ -353,31 +353,62 @@ class TT16Dialog(QDialog):
             QMessageBox.critical(self, "LVT4U", f"QML not found:\n{qml_path}")
             return
 
-        # Step 1: Load QML as-is
-        msg, ok = layer.loadNamedStyle(qml_path)
-        if not ok:
-            QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
+        # ----------------------------------------------------------
+        # Step 1: Load QML via QDomDocument (most reliable method)
+        # ----------------------------------------------------------
+        from qgis.PyQt.QtXml import QDomDocument
+        from qgis.core import QgsReadWriteContext
+
+        doc = QDomDocument()
+        with open(qml_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        success, err_msg, err_line, err_col = doc.setContent(content)
+        if not success:
+            QMessageBox.critical(
+                self, "LVT4U",
+                f"QML parse error at line {err_line}:\n{err_msg}"
+            )
             return
 
+        # Import style from parsed document
+        msg, ok = layer.importNamedStyle(doc)
+        if not ok:
+            QMessageBox.warning(self, "LVT4U", f"Import failed:\n{msg}")
+            return
+
+        # ----------------------------------------------------------
         # Step 2: Remap classify attribute if user chose different field
+        # ----------------------------------------------------------
         qml_attr = style["classify_attr"]
         if field_name != qml_attr:
             renderer = layer.renderer()
             if renderer and hasattr(renderer, 'setClassAttribute'):
                 renderer.setClassAttribute(field_name)
 
+        # ----------------------------------------------------------
         # Step 3: Remove categories with no matching features
+        # ----------------------------------------------------------
         self._remove_empty_categories(layer, field_name)
 
-        # Step 4: Full refresh
+        # ----------------------------------------------------------
+        # Step 4: Force complete refresh
+        # ----------------------------------------------------------
         layer.emitStyleChanged()
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
         self.iface.mapCanvas().refresh()
 
+        # Diagnostic: verify first category label
+        renderer = layer.renderer()
+        diag = ""
+        if renderer and hasattr(renderer, 'categories'):
+            cats = renderer.categories()
+            if cats:
+                diag = f" | Legend[0]: \"{cats[0].label()[:40]}\""
+
         self.iface.messageBar().pushSuccess(
             "LVT4U",
-            f"✅ {_style_label(style)} → {layer.name()} [{field_name}]"
+            f"✅ {_style_label(style)} → {layer.name()} [{field_name}]{diag}"
         )
 
     def _remove_empty_categories(self, layer, field_name):
@@ -411,3 +442,4 @@ class TT16Dialog(QDialog):
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
