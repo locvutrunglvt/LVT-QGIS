@@ -15,8 +15,9 @@ License: GPL-3.0
 import json
 import os
 
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor, QFont, QIcon, QPixmap, QPainter
+from qgis.PyQt.QtCore import Qt, QUrl
+from qgis.PyQt.QtGui import QDesktopServices
+from qgis.PyQt.QtGui import QColor, QFont, QIcon, QPixmap, QPainter  # noqa: F811
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QTableWidget, QTableWidgetItem,
@@ -127,6 +128,11 @@ class TT16Dialog(QDialog):
         tab_ref = QWidget()
         self.tabs.addTab(tab_ref, "📋 LDLR_Ref")
         self._build_ref_tab(tab_ref)
+
+        # --- Tab 3: Legal Documents ---
+        tab_legal = QWidget()
+        self.tabs.addTab(tab_legal, "📜 " + tr("Legal Docs"))
+        self._build_legal_tab(tab_legal)
 
         # Init
         self._on_layer_changed(self.cmb_layer.currentLayer())
@@ -316,6 +322,96 @@ class TT16Dialog(QDialog):
             hi.setTextAlignment(Qt.AlignCenter)
             hi.setForeground(QColor(100, 100, 100))
             self.tbl.setItem(i, 5, hi)
+
+    # -----------------------------------------------------------------
+    # Legal Documents tab
+    # -----------------------------------------------------------------
+    _LEGAL_DOCS = [
+        {
+            "file": "TT16_2023_BNN.pdf",
+            "vi": "📄  Thông tư 16/2023/TT-BNNPTNT (bản ký)",
+            "en": "📄  Circular 16/2023/TT-BNNPTNT (signed)",
+            "desc_vi": "Quy định về trình tự, thủ tục phân loại đất, rừng",
+            "desc_en": "Regulations on land and forest classification procedures",
+        },
+        {
+            "file": "TT16_PhuLuc_45_46.doc",
+            "vi": "📎  Phụ lục 45 + 46",
+            "en": "📎  Appendix 45 + 46",
+            "desc_vi": "Bảng phân loại đất, rừng (phần 1)",
+            "desc_en": "Land and forest classification tables (part 1)",
+        },
+        {
+            "file": "TT16_PhuLuc_47_48.doc",
+            "vi": "📎  Phụ lục 47 + 48",
+            "en": "📎  Appendix 47 + 48",
+            "desc_vi": "Bảng phân loại đất, rừng (phần 2)",
+            "desc_en": "Land and forest classification tables (part 2)",
+        },
+    ]
+
+    def _build_legal_tab(self, parent):
+        ly = QVBoxLayout(parent)
+        ly.setSpacing(12)
+
+        lang = current_language()
+        hdr_text = (
+            "📜  Văn bản pháp lý — Thông tư 16/2023"
+            if lang == 'vi'
+            else "📜  Legal Documents — Circular 16/2023"
+        )
+        lbl = QLabel(hdr_text)
+        lbl.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        lbl.setStyleSheet("color:#5d4037; padding:4px 0;")
+        ly.addWidget(lbl)
+
+        for doc in self._LEGAL_DOCS:
+            row = QVBoxLayout()
+            row.setSpacing(2)
+
+            btn = QPushButton(doc[lang])
+            btn.setFont(QFont("Segoe UI", 10))
+            btn.setMinimumHeight(36)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setStyleSheet(
+                "QPushButton{text-align:left;padding:6px 12px;"
+                "background:#fff8e1;border:1px solid #ffe082;border-radius:4px;}"
+                "QPushButton:hover{background:#fff3c4;border-color:#ffc107;}"
+            )
+            filepath = doc["file"]
+            btn.clicked.connect(
+                lambda checked, f=filepath: self._open_legal_doc(f)
+            )
+            row.addWidget(btn)
+
+            desc = QLabel("    " + doc[f"desc_{lang}"])
+            desc.setStyleSheet("color:#888; font-size:11px;")
+            row.addWidget(desc)
+
+            ly.addLayout(row)
+
+        ly.addStretch()
+
+        note_text = (
+            "💡 Nhấn vào tài liệu để mở bằng ứng dụng mặc định"
+            if lang == 'vi'
+            else "💡 Click a document to open with default application"
+        )
+        note = QLabel(note_text)
+        note.setStyleSheet("color:#aaa; font-size:10px; padding:4px;")
+        ly.addWidget(note)
+
+    def _open_legal_doc(self, filename):
+        """Open a legal document with the system's default application."""
+        docs_dir = os.path.join(os.path.dirname(__file__), os.pardir, "docs")
+        filepath = os.path.normpath(os.path.join(docs_dir, filename))
+        if os.path.isfile(filepath):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
+        else:
+            QMessageBox.warning(
+                self, "File not found",
+                f"Cannot find: {filepath}"
+            )
 
     # -----------------------------------------------------------------
     # Colour table — adapts to style type AND language (for Apply tab)

@@ -53,6 +53,9 @@ _TRANSLATIONS = {
     "Excel → GIS": "Chuyển Excel vào bản đồ",
     "Thematic Map": "Bản đồ chuyên đề",
     "Apply Style": "Áp dụng kiểu",
+    "Apply": "Áp dụng",
+    "Plot Labels": "Nhãn lô",
+    "Legal Docs": "Văn bản pháp lý",
 
     # --- Messages ---
     "{module} — Coming soon!": "{module} — Sắp ra mắt!",
