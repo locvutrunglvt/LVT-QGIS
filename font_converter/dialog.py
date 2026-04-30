@@ -227,7 +227,12 @@ class FontConverterDialog(QDialog):
             self.progress.setVisible(False)
 
     def _export(self, layer, path, driver, ext, mode, target_crs):
-        """Convert text fields in memory, then write using QgsVectorFileWriter."""
+        """Convert text fields, then write to file.
+
+        SHP: uses QgsVectorFileWriter with UTF-8 + .cpg
+        TAB: uses osgeo.ogr directly with latin-1 encoding to preserve
+             ALL byte values (including 0xAD soft-hyphen = TCVN3 'ư').
+        """
         # Identify string fields
         fields_list = []
         for field in layer.fields():
@@ -248,30 +253,10 @@ class FontConverterDialog(QDialog):
         self.log.append(f"💾 Format: {driver}")
         QApplication.processEvents()
 
-        # --- Step 1: Write using QgsVectorFileWriter (HCMGIS approach) ---
-        # TAB files: use Windows-1252 so MapInfo reads TCVN3 chars as single bytes
-        # SHP files: use UTF-8 + .cpg
-        file_encoding = "Windows-1252" if driver == "MapInfo File" else "UTF-8"
-        self.log.append(f"📝 File encoding: {file_encoding}")
-
-        writer = QgsVectorFileWriter(
-            path, file_encoding,
-            layer.fields(), layer.wkbType(), layer.crs(),
-            driver
-        )
-
-        if writer.hasError() != QgsVectorFileWriter.NoError:
-            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
-            QMessageBox.critical(self, "Error", writer.errorMessage())
-            del writer
-            return
-
+        # --- Convert all text values first ---
         converted_count = 0
-        for i, feat in enumerate(features):
-            self.progress.setValue(i + 1)
-
-            # Convert text fields
-            if mode < 3:  # Not "no conversion"
+        for feat in features:
+            if mode < 3:
                 for fn in fields_list:
                     old_val = feat[fn]
                     if old_val is not None and isinstance(old_val, str) and old_val:
@@ -287,29 +272,24 @@ class FontConverterDialog(QDialog):
                             converted_count += 1
                             feat[fn] = new_val
 
-            writer.addFeature(feat)
-
-        del writer  # Close and flush
-
         self.log.append(f"🔤 Converted: {converted_count} values")
+        QApplication.processEvents()
+
+        # --- Write to file ---
+        if driver == "MapInfo File":
+            self._write_tab_ogr(layer, features, path, fields_list, target_crs)
+        else:
+            self._write_shp(layer, features, path)
+
         self.progress.setValue(total + 2)
         QApplication.processEvents()
 
-        # --- Step 2: Write .cpg file for SHP ---
-        if driver == "ESRI Shapefile":
-            cpg_path = os.path.splitext(path)[0] + ".cpg"
-            try:
-                with open(cpg_path, 'w') as f:
-                    f.write("UTF-8")
-                self.log.append(f"📄 Created {os.path.basename(cpg_path)} (UTF-8)")
-            except Exception as e:
-                self.log.append(f"⚠️ Could not write .cpg: {e}")
-
-        # --- Step 3: Load result & set encoding ---
+        # --- Load result ---
+        load_enc = "latin-1" if driver == "MapInfo File" else "UTF-8"
         try:
             result_layer = QgsVectorLayer(path, os.path.basename(path).replace(ext, ''), 'ogr')
             result_layer.setProviderEncoding('System')
-            result_layer.dataProvider().setEncoding(file_encoding)
+            result_layer.dataProvider().setEncoding(load_enc)
             if result_layer.isValid():
                 QgsProject.instance().addMapLayer(result_layer)
                 self.log.append(f"✅ Added to project: {result_layer.name()}")
@@ -325,15 +305,15 @@ class FontConverterDialog(QDialog):
             f"   CRS: {crs_str}\n"
             f"   Features: {total}\n"
             f"   Font conversions: {converted_count}\n"
-            f"   Encoding: UTF-8"
+            f"   Encoding: {load_enc}"
         )
 
         tip = ""
-        if mode == 2:
+        if mode == 2 and driver == "MapInfo File":
             tip = (
                 "\n💡 Mở trong MapInfo:\n"
                 "   Font: .VnTime / .VnArial\n"
-                "   Encoding sẽ tự động nhận UTF-8"
+                "   Dữ liệu đã encode WindowsLatin1 — mở trực tiếp!"
             )
 
         QMessageBox.information(
@@ -344,6 +324,164 @@ class FontConverterDialog(QDialog):
             f"Font conversions: {converted_count}"
             + tip
         )
+
+    def _write_shp(self, layer, features, path):
+        """Write SHP with QgsVectorFileWriter + UTF-8 + .cpg."""
+        writer = QgsVectorFileWriter(
+            path, "UTF-8",
+            layer.fields(), layer.wkbType(), layer.crs(),
+            "ESRI Shapefile"
+        )
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
+            del writer
+            return
+        for i, feat in enumerate(features):
+            self.progress.setValue(i + 1)
+            writer.addFeature(feat)
+        del writer
+
+        cpg_path = os.path.splitext(path)[0] + ".cpg"
+        try:
+            with open(cpg_path, 'w') as f:
+                f.write("UTF-8")
+            self.log.append(f"📄 Created {os.path.basename(cpg_path)} (UTF-8)")
+        except Exception as e:
+            self.log.append(f"⚠️ Could not write .cpg: {e}")
+
+    def _write_tab_ogr(self, layer, features, path, fields_list, target_crs):
+        """Write TAB using osgeo.ogr with latin-1 encoding.
+
+        This bypasses QgsVectorFileWriter which strips U+00AD (soft hyphen),
+        the TCVN3 code point for Vietnamese 'ư'.
+        With latin-1, every Unicode char U+0000–U+00FF maps to byte 0x00–0xFF
+        faithfully — no stripping, no multi-byte encoding.
+        MapInfo reads this with charset WindowsLatin1 → .VnTime renders correctly.
+        """
+        from osgeo import ogr, osr
+
+        self.log.append("📝 Using osgeo.ogr writer (latin-1 / WindowsLatin1)")
+
+        # Remove existing files
+        for old_ext in ['.tab', '.dat', '.map', '.id', '.ind']:
+            old_path = os.path.splitext(path)[0] + old_ext
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        ogr_driver = ogr.GetDriverByName('MapInfo File')
+        ds = ogr_driver.CreateDataSource(path)
+        if ds is None:
+            self.log.append("❌ Could not create TAB datasource")
+            return
+
+        # Set up SRS
+        srs = osr.SpatialReference()
+        srs.ImportFromWkt(layer.crs().toWkt())
+
+        # Map QGIS geometry type to OGR
+        qgis_to_ogr_geom = {
+            QgsWkbTypes.Point: ogr.wkbPoint,
+            QgsWkbTypes.MultiPoint: ogr.wkbMultiPoint,
+            QgsWkbTypes.LineString: ogr.wkbLineString,
+            QgsWkbTypes.MultiLineString: ogr.wkbMultiLineString,
+            QgsWkbTypes.Polygon: ogr.wkbPolygon,
+            QgsWkbTypes.MultiPolygon: ogr.wkbMultiPolygon,
+        }
+        ogr_geom_type = qgis_to_ogr_geom.get(layer.wkbType(), ogr.wkbUnknown)
+
+        # Create layer with ENCODING option
+        ogr_layer = ds.CreateLayer(
+            os.path.splitext(os.path.basename(path))[0],
+            srs, ogr_geom_type,
+            options=['ENCODING=WindowsLatin1']
+        )
+        if ogr_layer is None:
+            self.log.append("❌ Could not create OGR layer")
+            ds = None
+            return
+
+        # Create fields
+        for field in layer.fields():
+            if field.type() == QVariant.Int:
+                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTInteger)
+            elif field.type() == QVariant.LongLong:
+                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTInteger64)
+            elif field.type() == QVariant.Double:
+                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTReal)
+                ogr_field.SetWidth(field.length() if field.length() > 0 else 20)
+                ogr_field.SetPrecision(field.precision() if field.precision() > 0 else 6)
+            elif field.type() == QVariant.String:
+                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTString)
+                ogr_field.SetWidth(field.length() if field.length() > 0 else 254)
+            else:
+                ogr_field = ogr.FieldDefn(field.name(), ogr.OFTString)
+                ogr_field.SetWidth(254)
+            ogr_layer.CreateField(ogr_field)
+
+        # Write features
+        layer_defn = ogr_layer.GetLayerDefn()
+        for i, feat in enumerate(features):
+            self.progress.setValue(i + 1)
+
+            ogr_feat = ogr.Feature(layer_defn)
+
+            # Set geometry
+            geom = feat.geometry()
+            if geom and not geom.isNull():
+                ogr_geom = ogr.CreateGeometryFromWkt(geom.asWkt())
+                if ogr_geom:
+                    ogr_feat.SetGeometry(ogr_geom)
+
+            # Set attributes
+            for j, field in enumerate(layer.fields()):
+                val = feat[field.name()]
+                if val is None:
+                    continue
+                if field.type() == QVariant.String and isinstance(val, str):
+                    if val:
+                        # Replace U+00AD (soft hyphen) with placeholder \x7f (DEL)
+                        # GDAL strips soft hyphens, so we use a substitute
+                        # then binary-patch the .DAT file after writing
+                        safe_val = val.replace('\xad', '\x7f')
+                        ogr_feat.SetField(j, safe_val)
+                elif field.type() in (QVariant.Int, QVariant.LongLong):
+                    try:
+                        ogr_feat.SetField(j, int(val))
+                    except (ValueError, TypeError):
+                        pass
+                elif field.type() == QVariant.Double:
+                    try:
+                        ogr_feat.SetField(j, float(val))
+                    except (ValueError, TypeError):
+                        pass
+                else:
+                    try:
+                        ogr_feat.SetField(j, str(val))
+                    except Exception:
+                        pass
+
+            ogr_layer.CreateFeature(ogr_feat)
+            ogr_feat = None
+
+        ds = None  # Close and flush
+
+        # --- Post-process: replace placeholder 0x7F → 0xAD in .DAT file ---
+        # 0xAD = TCVN3 code for 'ư' (soft hyphen in Unicode, stripped by GDAL)
+        dat_path = os.path.splitext(path)[0] + '.dat'
+        if os.path.exists(dat_path):
+            try:
+                with open(dat_path, 'rb') as f:
+                    data = f.read()
+                patched = data.replace(b'\x7f', b'\xad')
+                if patched != data:
+                    with open(dat_path, 'wb') as f:
+                        f.write(patched)
+                    n_patches = data.count(b'\x7f')
+                    self.log.append(f"🔧 Patched {n_patches} soft-hyphen bytes (ư) in .DAT")
+            except Exception as e:
+                self.log.append(f"⚠️ Could not patch .DAT: {e}")
+
+        self.log.append(f"✅ TAB file written: {os.path.basename(path)}")
 
     # ═══════════════════════════════════════════════════════════════
     # Conversion engines (HCMGIS-compatible index-based approach)
