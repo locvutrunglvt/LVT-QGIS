@@ -23,6 +23,7 @@ from qgis.PyQt.QtWidgets import (
     QHeaderView, QMessageBox, QAbstractItemView, QFrame,
     QTabWidget, QWidget, QTextBrowser, QRadioButton,
     QButtonGroup, QDoubleSpinBox, QCheckBox, QGridLayout,
+    QScrollArea, QSplitter,
 )
 from qgis.core import QgsVectorLayer, QgsWkbTypes, QgsSymbol, QgsSimpleFillSymbolLayer
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
@@ -209,8 +210,12 @@ class TT16Dialog(QDialog):
 
     def _build_main_tab(self, parent):
         ly = QVBoxLayout(parent)
-        ly.setSpacing(8)
+        ly.setSpacing(4)
+        ly.setContentsMargins(6, 4, 6, 4)
 
+        # ============================================================
+        # FIXED TOP: Standard selector + Layer/Style/Field
+        # ============================================================
         # Standard selector row: Old / New
         std_row = QHBoxLayout()
         std_row.setSpacing(8)
@@ -292,87 +297,98 @@ class TT16Dialog(QDialog):
         line.setStyleSheet("color:#ccc;")
         ly.addWidget(line)
 
-        # Plot Labels header
-        lbl_lh = QLabel("🏷️  " + tr("Plot Labels"))
-        lbl_lh.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        lbl_lh.setStyleSheet("color:#2e7d32; padding:2px 0;")
-        ly.addWidget(lbl_lh)
+        # ============================================================
+        # SCROLLABLE MIDDLE: Border (1 row) + Plot Labels
+        # ============================================================
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll_widget = QWidget()
+        scroll_ly = QVBoxLayout(scroll_widget)
+        scroll_ly.setSpacing(4)
+        scroll_ly.setContentsMargins(0, 0, 4, 0)
 
-        # Embed Plot Labels widget (stripped down)
-        try:
-            from .plot_labels import PlotLabelsDialog
-            self._label_dlg = PlotLabelsDialog(self.iface, parent)
-            self._label_dlg.setWindowFlags(Qt.Widget)
-            # Hide redundant UI from embedded dialog
-            self._label_dlg.btn_lang.setVisible(False)       # language toggle
-            self._label_dlg.tabs.tabBar().setVisible(False)   # inner tab bar
-            self._label_dlg.tabs.setCurrentIndex(0)           # show main tab
-            self._label_dlg.grp_layer.setVisible(False)       # layer selector
-            self._label_dlg.btn_apply.setVisible(False)       # apply button
-            self._label_dlg.btn_export.setVisible(False)      # export button
-            self._label_dlg.btn_reset.setVisible(False)       # reset button
-            self._label_dlg.btn_save_cfg.setVisible(False)    # save cfg
-            self._label_dlg.btn_load_cfg.setVisible(False)    # load cfg
-            self._label_dlg.btn_close.setVisible(False)       # close button
-            ly.addWidget(self._label_dlg, 1)
-        except Exception as e:
-            self._label_dlg = None
-            ly.addWidget(QLabel(f"Plot Labels: {e}"))
+        # ---- Border / Outline — compact single row ----
+        border_row = QHBoxLayout()
+        border_row.setSpacing(6)
 
-        # ---- Border / Outline Settings ----
-        grp_border = QGroupBox("✏️  Nét viền lô / Plot Border")
-        grp_border.setStyleSheet(
-            "QGroupBox{font-weight:bold;color:#37474f;border:1px solid #90a4ae;"
-            "border-radius:4px;margin-top:6px;padding-top:14px;}"
-            "QGroupBox::title{subcontrol-origin:margin;left:10px;padding:0 6px;}"
-        )
-        gb_ly = QGridLayout(grp_border)
-        gb_ly.setSpacing(6)
-
-        # Enable checkbox
-        self.chk_border = QCheckBox("Bật viền / Enable border")
+        self.chk_border = QCheckBox("✏️ Viền lô / Border")
         self.chk_border.setChecked(True)
-        gb_ly.addWidget(self.chk_border, 0, 0, 1, 2)
+        self.chk_border.setStyleSheet("font-weight:bold;color:#37474f;")
+        border_row.addWidget(self.chk_border)
 
-        # Line style
-        gb_ly.addWidget(QLabel("Kiểu nét / Style:"), 1, 0)
         self.cmb_line_style = QComboBox()
+        self.cmb_line_style.setMinimumWidth(130)
         self.cmb_line_style.addItems([
-            "─── Nét liền / Solid",
-            "- - - Nét đứt / Dash",
-            "· · · Nét chấm / Dot",
-            "-·-·- Gạch chấm / Dash-Dot",
-            "-··-·· Gạch 2 chấm / Dash-Dot-Dot",
+            "── Liền/Solid",
+            "- - Đứt/Dash",
+            "··· Chấm/Dot",
+            "-·- Gạch-Chấm",
         ])
-        gb_ly.addWidget(self.cmb_line_style, 1, 1)
+        border_row.addWidget(self.cmb_line_style)
 
-        # Line width
-        gb_ly.addWidget(QLabel("Độ rộng / Width:"), 2, 0)
         self.spn_line_width = QDoubleSpinBox()
         self.spn_line_width.setRange(0.0, 5.0)
         self.spn_line_width.setSingleStep(0.1)
         self.spn_line_width.setValue(0.3)
         self.spn_line_width.setSuffix(" mm")
-        gb_ly.addWidget(self.spn_line_width, 2, 1)
+        self.spn_line_width.setFixedWidth(80)
+        border_row.addWidget(self.spn_line_width)
 
-        # Line color
-        gb_ly.addWidget(QLabel("Màu nét / Color:"), 3, 0)
         self.cmb_line_color = QComboBox()
+        self.cmb_line_color.setMinimumWidth(110)
         self.cmb_line_color.addItems([
-            "⬛ Đen / Black",
-            "🔴 Đỏ / Red",
-            "⬜ Trắng / White",
-            "🟤 Nâu đậm / Dark Brown",
-            "🔵 Xanh dương / Blue",
-            "🟢 Xanh lá / Green",
-            "🟡 Vàng / Yellow",
-            "⚫ Xám đậm / Dark Gray",
+            "⬛ Đen/Black",
+            "🔴 Đỏ/Red",
+            "⬜ Trắng/White",
+            "🟤 Nâu/Brown",
+            "🔵 Xanh/Blue",
+            "🟢 Lá/Green",
+            "⚫ Xám/Gray",
         ])
-        gb_ly.addWidget(self.cmb_line_color, 3, 1)
+        border_row.addWidget(self.cmb_line_color)
+        border_row.addStretch()
+        scroll_ly.addLayout(border_row)
 
-        ly.addWidget(grp_border)
+        # Thin separator
+        sep = QFrame()
+        sep.setFrameShape(QFrame.HLine)
+        sep.setStyleSheet("color:#e0e0e0;")
+        scroll_ly.addWidget(sep)
 
-        # Bottom action bar
+        # Plot Labels header
+        lbl_lh = QLabel("🏷️  " + tr("Plot Labels"))
+        lbl_lh.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        lbl_lh.setStyleSheet("color:#2e7d32; padding:2px 0;")
+        scroll_ly.addWidget(lbl_lh)
+
+        # Embed Plot Labels widget (stripped down)
+        try:
+            from .plot_labels import PlotLabelsDialog
+            self._label_dlg = PlotLabelsDialog(self.iface, scroll_widget)
+            self._label_dlg.setWindowFlags(Qt.Widget)
+            self._label_dlg.btn_lang.setVisible(False)
+            self._label_dlg.tabs.tabBar().setVisible(False)
+            self._label_dlg.tabs.setCurrentIndex(0)
+            self._label_dlg.grp_layer.setVisible(False)
+            self._label_dlg.btn_apply.setVisible(False)
+            self._label_dlg.btn_export.setVisible(False)
+            self._label_dlg.btn_reset.setVisible(False)
+            self._label_dlg.btn_save_cfg.setVisible(False)
+            self._label_dlg.btn_load_cfg.setVisible(False)
+            self._label_dlg.btn_close.setVisible(False)
+            scroll_ly.addWidget(self._label_dlg)
+        except Exception as e:
+            self._label_dlg = None
+            scroll_ly.addWidget(QLabel(f"Plot Labels: {e}"))
+
+        scroll_ly.addStretch()
+        scroll.setWidget(scroll_widget)
+        ly.addWidget(scroll, 1)
+
+        # ============================================================
+        # FIXED BOTTOM: Action buttons
+        # ============================================================
         btn_row = QHBoxLayout()
 
         self.btn_apply = QPushButton("🎨  " + tr("Apply"))
@@ -1003,8 +1019,7 @@ class TT16Dialog(QDialog):
         3: QColor(80, 40, 10),      # Dark Brown
         4: QColor(0, 0, 180),       # Blue
         5: QColor(0, 128, 0),       # Green
-        6: QColor(200, 200, 0),     # Yellow
-        7: QColor(80, 80, 80),      # Dark Gray
+        6: QColor(80, 80, 80),      # Dark Gray
     }
 
     def _apply_border_to_renderer(self, layer, _log=None):
@@ -1032,17 +1047,23 @@ class TT16Dialog(QDialog):
             return
 
         count = 0
-        for cat in renderer.categories():
+        for i, cat in enumerate(renderer.categories()):
             symbol = cat.symbol()
             if symbol is None:
                 continue
-            for i in range(symbol.symbolLayerCount()):
-                sl = symbol.symbolLayer(i)
+            # Clone symbol so we can modify and write back
+            new_sym = symbol.clone()
+            modified = False
+            for j in range(new_sym.symbolLayerCount()):
+                sl = new_sym.symbolLayer(j)
                 if isinstance(sl, QgsSimpleFillSymbolLayer):
                     sl.setStrokeColor(stroke_color)
                     sl.setStrokeWidth(width)
                     sl.setStrokeStyle(pen_style)
+                    modified = True
                     count += 1
+            if modified:
+                renderer.updateCategorySymbol(i, new_sym)
 
         if _log:
             _log(f"Border applied to {count} symbol layers")
