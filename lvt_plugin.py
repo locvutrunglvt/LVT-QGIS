@@ -355,7 +355,15 @@ class LvtPlugin:
 
     def _open_packager(self):
         """Open the Map Packager dialog."""
-        self._show_placeholder("Package Map")
+        if "packager" not in self._dialogs:
+            from .map_packager.dialog import PackageMapDialog
+            self._dialogs["packager"] = PackageMapDialog(self.iface)
+
+        dlg = self._dialogs["packager"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_thematic_tt16(self):
         """Open the Thematic Map (TT16/2023) dialog."""
