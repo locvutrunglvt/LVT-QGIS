@@ -411,6 +411,27 @@ class TT16Dialog(QDialog):
             f"✅ {_style_label(style)} → {layer.name()} [{field_name}]{diag}"
         )
 
+    @staticmethod
+    def _normalize(val):
+        """Normalize a value to a comparable string.
+
+        Handles type mismatch:
+          int/float 14 or 14.0 → "14"
+          str "14"             → "14"
+          str "TXG1"           → "TXG1"
+          NULL / None          → ""
+        """
+        if val is None:
+            return ""
+        # Try numeric normalization (14.0 → "14", 3.0 → "3")
+        try:
+            f = float(val)
+            if f == int(f):
+                return str(int(f))
+            return str(f)
+        except (ValueError, TypeError):
+            return str(val).strip()
+
     def _remove_empty_categories(self, layer, field_name):
         """Keep only categories whose value exists in the data."""
         renderer = layer.renderer()
@@ -421,18 +442,16 @@ class TT16Dialog(QDialog):
         if idx < 0:
             return
 
-        # Collect unique values from data
+        # Collect unique normalized values from data
         unique_vals = set()
         for feat in layer.getFeatures():
-            val = feat[idx]
-            if val is not None:
-                unique_vals.add(str(val))
+            unique_vals.add(self._normalize(feat[idx]))
 
         # Remove unmatched categories (from end to keep indices valid)
         cats = renderer.categories()
         to_remove = []
         for i, cat in enumerate(cats):
-            cat_val = str(cat.value()) if cat.value() is not None else ""
+            cat_val = self._normalize(cat.value())
             if cat_val not in unique_vals:
                 to_remove.append(i)
 
@@ -442,4 +461,5 @@ class TT16Dialog(QDialog):
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
 
