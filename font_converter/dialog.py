@@ -248,15 +248,12 @@ class FontConverterDialog(QDialog):
         self.log.append(f"💾 Format: {driver}")
         QApplication.processEvents()
 
-        # --- Write features with QgsVectorFileWriter ---
-        # TAB: use CP1252 (= WindowsLatin1) so MapInfo reads single bytes
-        #   TCVN3 chars U+00A0-U+00FF → single bytes 0xA0-0xFF
-        # SHP: use UTF-8 + .cpg
-        file_encoding = "CP1252" if driver == "MapInfo File" else "UTF-8"
-        self.log.append(f"📝 Encoding: {file_encoding}")
-
+        # --- Write features with QgsVectorFileWriter (always UTF-8) ---
+        # Note: QgsVectorFileWriter ignores encoding param for MapInfo driver
+        # and always writes Charset "Neutral". We post-process the .TAB file
+        # header below to set the correct charset for MapInfo.
         writer = QgsVectorFileWriter(
-            path, file_encoding,
+            path, "UTF-8",
             layer.fields(), layer.wkbType(), layer.crs(),
             driver
         )
@@ -296,6 +293,10 @@ class FontConverterDialog(QDialog):
         self.progress.setValue(total + 2)
         QApplication.processEvents()
 
+        # --- Post-process for MapInfo TAB: patch charset + re-encode .DAT ---
+        if driver == "MapInfo File":
+            self._postprocess_tab(path)
+
         # --- Write .cpg file for SHP ---
         if driver == "ESRI Shapefile":
             cpg_path = os.path.splitext(path)[0] + ".cpg"
@@ -307,10 +308,11 @@ class FontConverterDialog(QDialog):
                 self.log.append(f"⚠️ Could not write .cpg: {e}")
 
         # --- Load result & set encoding ---
+        load_enc = 'System' if driver == 'MapInfo File' else 'UTF-8'
         try:
             result_layer = QgsVectorLayer(path, os.path.basename(path).replace(ext, ''), 'ogr')
             result_layer.setProviderEncoding('System')
-            result_layer.dataProvider().setEncoding(file_encoding)
+            result_layer.dataProvider().setEncoding(load_enc)
             if result_layer.isValid():
                 QgsProject.instance().addMapLayer(result_layer)
                 self.log.append(f"✅ Added to project: {result_layer.name()}")
@@ -326,7 +328,7 @@ class FontConverterDialog(QDialog):
             f"   CRS: {crs_str}\n"
             f"   Features: {total}\n"
             f"   Font conversions: {converted_count}\n"
-            f"   Encoding: {file_encoding}"
+            f"   Encoding: {load_enc}"
         )
 
         tip = ""
@@ -345,6 +347,97 @@ class FontConverterDialog(QDialog):
             f"Font conversions: {converted_count}"
             + tip
         )
+
+    def _postprocess_tab(self, tab_path):
+        """Post-process TAB files for MapInfo compatibility.
+
+        QgsVectorFileWriter always writes Charset "Neutral" regardless of
+        the encoding parameter. This method:
+        1. Patches .TAB header: Neutral → WindowsLatin1
+        2. Re-encodes .DAT text fields: UTF-8 multi-byte → single-byte
+           using dBASE record structure (preserves fixed-width fields).
+        """
+        import struct
+
+        # Step 1: Patch .TAB header charset
+        try:
+            with open(tab_path, 'r', encoding='ascii', errors='replace') as f:
+                header = f.read()
+            patched = header.replace(
+                'Charset "Neutral"', 'Charset "WindowsLatin1"'
+            ).replace(
+                '!charset Neutral', '!charset WindowsLatin1'
+            )
+            if patched != header:
+                with open(tab_path, 'w', encoding='ascii', errors='replace') as f:
+                    f.write(patched)
+                self.log.append('📝 .TAB charset: Neutral → WindowsLatin1')
+        except Exception as e:
+            self.log.append(f'⚠️ Could not patch .TAB header: {e}')
+
+        # Step 2: Re-encode .DAT file (dBASE III format)
+        dat_path = os.path.splitext(tab_path)[0] + '.dat'
+        if not os.path.exists(dat_path):
+            return
+
+        try:
+            with open(dat_path, 'rb') as f:
+                data = bytearray(f.read())
+
+            if len(data) < 32:
+                return
+
+            # Parse dBASE header
+            num_records = struct.unpack_from('<I', data, 4)[0]
+            header_size = struct.unpack_from('<H', data, 8)[0]
+            record_size = struct.unpack_from('<H', data, 10)[0]
+
+            # Parse field descriptors (32 bytes each, starting at byte 32)
+            fields = []
+            offset = 32
+            while offset < header_size - 1 and data[offset] != 0x0D:
+                fname = data[offset:offset+11].split(b'\x00')[0].decode('ascii', errors='replace')
+                ftype = chr(data[offset+11])
+                flen = data[offset+16]
+                fields.append((fname, ftype, flen))
+                offset += 32
+
+            # Process each record
+            n_fixed = 0
+            for rec_idx in range(num_records):
+                rec_start = header_size + rec_idx * record_size
+                field_offset = 1  # Skip deletion flag byte
+
+                for fname, ftype, flen in fields:
+                    fstart = rec_start + field_offset
+                    fend = fstart + flen
+
+                    if ftype == 'C' and fend <= len(data):
+                        # Character field: decode UTF-8 → re-encode latin-1
+                        raw = bytes(data[fstart:fend])
+                        try:
+                            text = raw.decode('utf-8')
+                            # Encode as latin-1 (covers U+0000-U+00FF)
+                            latin = text.encode('latin-1', errors='replace')
+                            # Pad to original field width with spaces
+                            padded = latin[:flen].ljust(flen, b' ')
+                            if padded != raw:
+                                data[fstart:fend] = padded
+                                n_fixed += 1
+                        except (UnicodeDecodeError, UnicodeEncodeError):
+                            pass  # Leave field as-is if conversion fails
+
+                    field_offset += flen
+
+            if n_fixed > 0:
+                with open(dat_path, 'wb') as f:
+                    f.write(bytes(data))
+                self.log.append(f'🔧 Re-encoded {n_fixed} fields (UTF-8 → latin-1) in .DAT')
+            else:
+                self.log.append('📝 .DAT: no re-encoding needed')
+
+        except Exception as e:
+            self.log.append(f'⚠️ Could not re-encode .DAT: {e}')
 
     # ═══════════════════════════════════════════════════════════════
     # Conversion engines (index-based parallel list approach)
