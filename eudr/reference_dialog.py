@@ -216,11 +216,11 @@ class EudrReferenceDialog(QDialog):
         if is_vi:
             html = """
             <div style='font-family:Arial;padding:10px;'>
-            <div style='background:linear-gradient(135deg,#1B5E20,#2E7D32,#43A047);
+            <div style='background-color:#1B5E20;
             color:white;padding:16px 20px;border-radius:8px;margin-bottom:14px;
-            text-align:center;font-size:14px;letter-spacing:0.5px;line-height:1.6;'>
-            🌿 <i>"Hãy chứng minh cho tôi sản phẩm của bạn<br>
-            đến từ polygon xinh đẹp đó"</i> 🌿
+            text-align:center;font-size:15px;line-height:1.8;'>
+            🌿 <b><i>"Hãy chứng minh cho tôi sản phẩm của bạn
+            đến từ polygon xinh đẹp đó"</i></b> 🌿
             </div>
             <h2 style='color:#1B5E20;'>📋 Tóm tắt Quy định EUDR</h2>
 
@@ -272,11 +272,11 @@ class EudrReferenceDialog(QDialog):
         else:
             html = """
             <div style='font-family:Arial;padding:10px;'>
-            <div style='background:linear-gradient(135deg,#1B5E20,#2E7D32,#43A047);
+            <div style='background-color:#1B5E20;
             color:white;padding:16px 20px;border-radius:8px;margin-bottom:14px;
-            text-align:center;font-size:14px;letter-spacing:0.5px;line-height:1.6;'>
-            🌿 <i>"Prove to me that your product<br>
-            comes from that beautiful polygon"</i> 🌿
+            text-align:center;font-size:15px;line-height:1.8;'>
+            🌿 <b><i>"Prove to me that your product
+            comes from that beautiful polygon"</i></b> 🌿
             </div>
             <h2 style='color:#1B5E20;'>📋 EUDR Regulation Summary</h2>
 
