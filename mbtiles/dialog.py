@@ -503,9 +503,10 @@ class MBTilesDialog(QDialog):
 
         # Spacing newlines after underline (default 5)
         n_sp = self.spn_spacing.value()
-        spacing = " || ".join(["'\\n'"] * max(1, n_sp))
+        nl = "'" + "\\n" + "'"  # produces the 4-char string '\n' for QGIS
+        spacing = (" || ".join([nl] * max(1, n_sp)))
 
-        expr = f"({num_expr}) || '\\n' || '{underline}' || {spacing} || ({den_expr})"
+        expr = "(" + num_expr + ") || '\\n' || '" + underline + "' || " + spacing + " || (" + den_expr + ")"
         return expr
 
     # ---- Preview ----
@@ -746,11 +747,19 @@ class MBTilesDialog(QDialog):
                 fmt.setFont(font)
                 fmt.setColor(self._font_color)
                 fmt.setSize(self.spn_fsize.value())
-                fmt.setLineHeight(self.spn_line_h.value())
+                # QGIS RenderPercentage: 1.0 = 100%, 0.2 = 20%
+                lh_pct = self.spn_line_h.value() / 100.0
                 try:
                     fmt.setLineHeightUnit(QgsUnitTypes.RenderPercentage)
+                    fmt.setLineHeight(lh_pct)
                 except Exception:
-                    pass
+                    # Fallback: try Qgis.RenderUnit enum (QGIS 3.30+)
+                    try:
+                        from qgis.core import Qgis
+                        fmt.setLineHeightUnit(Qgis.RenderUnit.Percentage)
+                        fmt.setLineHeight(lh_pct)
+                    except Exception:
+                        fmt.setLineHeight(lh_pct)
 
                 buf = QgsTextBufferSettings()
                 buf.setEnabled(True)
