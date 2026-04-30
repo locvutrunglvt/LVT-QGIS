@@ -182,35 +182,55 @@ class TT16Dialog(QDialog):
 
         ly.addLayout(top)
 
-        ly.addStretch()
+        # Separator
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setStyleSheet("color:#ccc;")
+        ly.addWidget(line)
 
-        # Bottom action bar — all buttons in one row
+        # Plot Labels header
+        lbl_lh = QLabel("🏷️  " + tr("Plot Labels"))
+        lbl_lh.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        lbl_lh.setStyleSheet("color:#2e7d32; padding:2px 0;")
+        ly.addWidget(lbl_lh)
+
+        # Embed Plot Labels widget (stripped down)
+        try:
+            from .plot_labels import PlotLabelsDialog
+            self._label_dlg = PlotLabelsDialog(self.iface, parent)
+            self._label_dlg.setWindowFlags(Qt.Widget)
+            # Hide redundant UI from embedded dialog
+            self._label_dlg.btn_lang.setVisible(False)       # language toggle
+            self._label_dlg.tabs.tabBar().setVisible(False)   # inner tab bar
+            self._label_dlg.tabs.setCurrentIndex(0)           # show main tab
+            self._label_dlg.grp_layer.setVisible(False)       # layer selector
+            self._label_dlg.btn_apply.setVisible(False)       # apply button
+            self._label_dlg.btn_export.setVisible(False)      # export button
+            self._label_dlg.btn_reset.setVisible(False)       # reset button
+            self._label_dlg.btn_save_cfg.setVisible(False)    # save cfg
+            self._label_dlg.btn_load_cfg.setVisible(False)    # load cfg
+            self._label_dlg.btn_close.setVisible(False)       # close button
+            ly.addWidget(self._label_dlg, 1)
+        except Exception as e:
+            self._label_dlg = None
+            ly.addWidget(QLabel(f"Plot Labels: {e}"))
+
+        # Bottom action bar
         btn_row = QHBoxLayout()
 
-        self.btn_apply = QPushButton("🎨  " + tr("Apply Style"))
-        self.btn_apply.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        self.btn_apply.setMinimumHeight(40)
+        self.btn_apply = QPushButton("🎨  " + tr("Apply"))
+        self.btn_apply.setFont(QFont("Segoe UI", 11, QFont.Bold))
+        self.btn_apply.setMinimumHeight(42)
         self.btn_apply.setStyleSheet(
             "QPushButton{background:#1565c0;color:white;border-radius:5px;"
             "padding:6px 20px;}"
             "QPushButton:hover{background:#1976d2;}"
         )
-        self.btn_apply.clicked.connect(self._on_apply_clicked)
-        btn_row.addWidget(self.btn_apply, 2)
-
-        self.btn_labels = QPushButton("🏷️  " + tr("Plot Labels"))
-        self.btn_labels.setFont(QFont("Segoe UI", 10, QFont.Bold))
-        self.btn_labels.setMinimumHeight(40)
-        self.btn_labels.setStyleSheet(
-            "QPushButton{background:#2e7d32;color:white;border-radius:5px;"
-            "padding:6px 20px;}"
-            "QPushButton:hover{background:#388e3c;}"
-        )
-        self.btn_labels.clicked.connect(self._open_plot_labels)
-        btn_row.addWidget(self.btn_labels, 2)
+        self.btn_apply.clicked.connect(self._on_apply_all)
+        btn_row.addWidget(self.btn_apply, 3)
 
         btn_close = QPushButton(tr("Close"))
-        btn_close.setMinimumHeight(40)
+        btn_close.setMinimumHeight(42)
         btn_close.setStyleSheet(
             "QPushButton{background:#757575;color:white;border-radius:5px;"
             "padding:6px 20px;}"
@@ -306,18 +326,23 @@ class TT16Dialog(QDialog):
         pass
 
     # -----------------------------------------------------------------
-    # Plot Labels launcher
+    # Unified Apply — style + labels in one click
     # -----------------------------------------------------------------
-    def _open_plot_labels(self):
-        """Open Plot Labels as a separate popup dialog."""
-        if not hasattr(self, '_label_dlg') or self._label_dlg is None:
-            from .plot_labels import PlotLabelsDialog
-            self._label_dlg = PlotLabelsDialog(self.iface)
-        dlg = self._label_dlg
-        dlg.refresh_layers()
-        dlg.show()
-        dlg.raise_()
-        dlg.activateWindow()
+    def _on_apply_all(self):
+        """Apply thematic style AND plot labels in one operation."""
+        # 1. Apply thematic categorized style
+        self._on_apply_clicked()
+
+        # 2. Apply labels from embedded PlotLabelsDialog
+        if hasattr(self, '_label_dlg') and self._label_dlg is not None:
+            # Sync layer: set the embedded dialog's layer to match TT16
+            layer = self.cmb_layer.currentLayer()
+            if layer:
+                idx = self._label_dlg.cbo_layer.findText(layer.name())
+                if idx >= 0:
+                    self._label_dlg.cbo_layer.setCurrentIndex(idx)
+            # Apply labels (uses overridden pure-label method)
+            self._label_dlg._apply_to_layer()
 
     # -----------------------------------------------------------------
     # Events
