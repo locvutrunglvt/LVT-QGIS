@@ -292,22 +292,24 @@ class MBTilesDialog(QDialog):
         fg.addWidget(self.lbl_spacing, 2, 2)
         fg.addWidget(self.spn_spacing, 2, 3)
 
-        # Scale visibility — ComboBox with predefined round scales
-        self.lbl_show_from = QLabel()
-        self.cbo_scale_from = QComboBox()
+        # Scale visibility — intuitive labels
+        # "Zoom gần" = large scale (small denominator) = QGIS maximumScale
+        # "Zoom xa"  = small scale (large denominator) = QGIS minimumScale
+        self.lbl_zoom_in = QLabel()
+        self.cbo_zoom_in = QComboBox()
         for s in _SCALES:
-            self.cbo_scale_from.addItem(f"1:{s:,}".replace(",", "."), s)
-        self.cbo_scale_from.setCurrentIndex(_SCALES.index(5000))
-        fg.addWidget(self.lbl_show_from, 3, 0)
-        fg.addWidget(self.cbo_scale_from, 3, 1)
+            self.cbo_zoom_in.addItem(f"1:{s:,}".replace(",", "."), s)
+        self.cbo_zoom_in.setCurrentIndex(_SCALES.index(1000))  # 1:1,000
+        fg.addWidget(self.lbl_zoom_in, 3, 0)
+        fg.addWidget(self.cbo_zoom_in, 3, 1)
 
-        self.lbl_show_to = QLabel()
-        self.cbo_scale_to = QComboBox()
+        self.lbl_zoom_out = QLabel()
+        self.cbo_zoom_out = QComboBox()
         for s in _SCALES:
-            self.cbo_scale_to.addItem(f"1:{s:,}".replace(",", "."), s)
-        self.cbo_scale_to.setCurrentIndex(_SCALES.index(50000))
-        fg.addWidget(self.lbl_show_to, 3, 2)
-        fg.addWidget(self.cbo_scale_to, 3, 3)
+            self.cbo_zoom_out.addItem(f"1:{s:,}".replace(",", "."), s)
+        self.cbo_zoom_out.setCurrentIndex(_SCALES.index(50000))  # 1:50,000
+        fg.addWidget(self.lbl_zoom_out, 3, 2)
+        fg.addWidget(self.cbo_zoom_out, 3, 3)
 
         lbl_ly.addLayout(fg)
 
@@ -634,11 +636,11 @@ class MBTilesDialog(QDialog):
         self.lbl_uline.setText(self._t("Underline count:"))
         self.lbl_spacing.setText(self._t("Spacing lines:"))
         if self.lang == 'vi':
-            self.lbl_show_from.setText("Hiện từ:")
-            self.lbl_show_to.setText("Đến:")
+            self.lbl_zoom_in.setText("🔍+ Gần:")
+            self.lbl_zoom_out.setText("🔍− Xa:")
         else:
-            self.lbl_show_from.setText("Show from:")
-            self.lbl_show_to.setText("To:")
+            self.lbl_zoom_in.setText("🔍+ Near:")
+            self.lbl_zoom_out.setText("🔍− Far:")
         self.lbl_preview_l.setText(self._t("Preview:"))
         self.chk_sat_bg.setText(
             "🛰️ Nền vệ tinh" if self.lang == 'vi' else "🛰️ Satellite BG"
@@ -737,8 +739,10 @@ class MBTilesDialog(QDialog):
                 s.fieldName = expr
                 s.isExpression = True
                 s.scaleVisibility = True
-                s.minimumScale = self.cbo_scale_to.currentData()
-                s.maximumScale = self.cbo_scale_from.currentData()
+                # maximumScale = most zoomed IN (small denominator)
+                # minimumScale = most zoomed OUT (large denominator)
+                s.maximumScale = self.cbo_zoom_in.currentData()
+                s.minimumScale = self.cbo_zoom_out.currentData()
 
                 fmt = QgsTextFormat()
                 font = self.cbo_font.currentFont()
