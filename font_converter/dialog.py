@@ -248,9 +248,15 @@ class FontConverterDialog(QDialog):
         self.log.append(f"💾 Format: {driver}")
         QApplication.processEvents()
 
-        # --- Write features with QgsVectorFileWriter (UTF-8) ---
+        # --- Write features with QgsVectorFileWriter ---
+        # TAB: use "System" encoding (Windows-1252) so MapInfo reads natively
+        #   TCVN3 chars U+00A0-U+00FF → single bytes 0xA0-0xFF
+        # SHP: use UTF-8 + .cpg
+        file_encoding = "System" if driver == "MapInfo File" else "UTF-8"
+        self.log.append(f"📝 Encoding: {file_encoding}")
+
         writer = QgsVectorFileWriter(
-            path, "UTF-8",
+            path, file_encoding,
             layer.fields(), layer.wkbType(), layer.crs(),
             driver
         )
@@ -304,7 +310,7 @@ class FontConverterDialog(QDialog):
         try:
             result_layer = QgsVectorLayer(path, os.path.basename(path).replace(ext, ''), 'ogr')
             result_layer.setProviderEncoding('System')
-            result_layer.dataProvider().setEncoding('UTF-8')
+            result_layer.dataProvider().setEncoding(file_encoding)
             if result_layer.isValid():
                 QgsProject.instance().addMapLayer(result_layer)
                 self.log.append(f"✅ Added to project: {result_layer.name()}")
@@ -320,7 +326,7 @@ class FontConverterDialog(QDialog):
             f"   CRS: {crs_str}\n"
             f"   Features: {total}\n"
             f"   Font conversions: {converted_count}\n"
-            f"   Encoding: UTF-8"
+            f"   Encoding: {file_encoding}"
         )
 
         tip = ""
@@ -328,7 +334,7 @@ class FontConverterDialog(QDialog):
             tip = (
                 "\n💡 Mở trong MapInfo:\n"
                 "   Font: .VnTime / .VnArial\n"
-                "   Encoding: UTF-8 (tự động)"
+                "   Mở trực tiếp — encoding WindowsLatin1"
             )
 
         QMessageBox.information(
