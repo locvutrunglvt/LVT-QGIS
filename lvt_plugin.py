@@ -250,8 +250,6 @@ class LvtPlugin:
              "https://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1", 0, 22),
         ],
         "🇻🇳 Vietnam": [
-            ("Vietbando Maps",
-             "https://images.vietbando.com/ImageLoader/GetImage.ashx?Ver=2016&LayerIds=VBD&Y={y}&X={x}&Level={z}", 0, 22),
             ("BecaGIS Maps",
              "https://maps.becagis.vn/tiles/basemap/light/{z}/{x}/{y}.png", 0, 22),
             ("F4 Map 2D",
