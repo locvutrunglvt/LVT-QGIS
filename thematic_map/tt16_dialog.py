@@ -333,7 +333,7 @@ class TT16Dialog(QDialog):
     # Apply
     # -----------------------------------------------------------------
     # Build ID — change this to verify correct code is loaded
-    _BUILD = "v9-debug"
+    _BUILD = "v10-import"
 
     def _on_apply_clicked(self):
         layer = self.cmb_layer.currentLayer()
@@ -364,12 +364,27 @@ class TT16Dialog(QDialog):
         _log(f"Apply: style={style['id']}, field={field_name}")
 
         # ----------------------------------------------------------
-        # Step 1: Load QML style
+        # Step 1: Load QML via QDomDocument (bypasses QGIS cache)
         # ----------------------------------------------------------
-        msg, ok = layer.loadNamedStyle(qml_path)
-        _log(f"loadNamedStyle: ok={ok}, msg={msg[:80]}")
-        if not ok:
-            QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
+        from qgis.PyQt.QtXml import QDomDocument
+
+        doc = QDomDocument()
+        with open(qml_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        xml_ok, xml_err, xml_line, xml_col = doc.setContent(content)
+        if not xml_ok:
+            QMessageBox.critical(
+                self, "LVT4U",
+                f"QML parse error at line {xml_line}:\n{xml_err}"
+            )
+            return
+
+        # importNamedStyle returns (str, str): (result, errorMsg)
+        # errorMsg is EMPTY on success, non-empty on failure
+        _result, err_msg = layer.importNamedStyle(doc)
+        _log(f"importNamedStyle: result='{_result[:40]}', err='{err_msg[:40]}'")
+        if err_msg:
+            QMessageBox.warning(self, "LVT4U", f"Import failed:\n{err_msg}")
             return
 
         # ----------------------------------------------------------
