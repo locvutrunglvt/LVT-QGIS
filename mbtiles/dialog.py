@@ -628,14 +628,14 @@ class MBTilesDialog(QDialog):
         lh = self.spn_line_h.value() / 100.0
         is_bold = self.chk_bold.isChecked()
 
-        num_t = nsep.join(num_f) if num_f else "Lo-LDLR"
+        num_t = nsep.join(num_f) if num_f else "TXB-445"
         den_t = dsep.join(den_f) if den_f else ""
         nsfx = self.edt_num_sfx.text()
         dsfx = self.edt_den_sfx.text()
         if nsfx and num_f:
             num_t += " " + nsfx
         if not num_f and not den_f:
-            den_t = "Dtich"
+            den_t = "12.5 ha"
         if dsfx and den_f:
             den_t += " " + dsfx
 
