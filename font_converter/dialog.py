@@ -67,6 +67,9 @@ _TCVN3_TO_UNICODE = {
     '\xcc': 'Í', '\x99': 'Ì', '\xcd': 'Ỉ',
 }
 
+# Build reverse: Unicode char → TCVN3 code point (for .VnTime font)
+_UNICODE_TO_TCVN3 = {v: k for k, v in _TCVN3_TO_UNICODE.items()}
+
 # ═══════════════════════════════════════════════════════════════
 # VNI → Unicode mapping
 # ═══════════════════════════════════════════════════════════════
@@ -130,6 +133,7 @@ class FontConverterDialog(QDialog):
         self.cmb_from.addItems([
             "TCVN3 (ABC) → Unicode",
             "VNI → Unicode",
+            "Unicode → TCVN3 (.VnTime)",
             "Không chuyển font / No conversion",
         ])
         form.addRow("Chuyển đổi / Convert:", self.cmb_from)
@@ -204,7 +208,7 @@ class FontConverterDialog(QDialog):
             target_crs = layer.crs()
 
         # --- Mode ---
-        mode = self.cmb_from.currentIndex()  # 0=TCVN3→Uni, 1=VNI→Uni, 2=none
+        mode = self.cmb_from.currentIndex()  # 0=TCVN3→Uni, 1=VNI→Uni, 2=Uni→TCVN3, 3=none
 
         # --- Format ---
         fmt_idx = self.cmb_format.currentIndex()  # 0=SHP, 1=TAB
@@ -251,7 +255,7 @@ class FontConverterDialog(QDialog):
             if fields.field(i).typeName().lower() in ('string', 'text', 'varchar')
         ]
 
-        mode_labels = ["TCVN3 → Unicode", "VNI → Unicode", "No conversion"]
+        mode_labels = ["TCVN3 → Unicode", "VNI → Unicode", "Unicode → TCVN3", "No conversion"]
         self.log.append(f"📋 Layer: {layer.name()} — {total} features")
         self.log.append(f"🔤 Text fields: {len(text_field_indices)}")
         self.log.append(f"🔄 Mode: {mode_labels[mode]}")
@@ -273,6 +277,8 @@ class FontConverterDialog(QDialog):
                         new_val = self._convert_tcvn3_to_unicode(val)
                     elif mode == 1:
                         new_val = self._convert_vni_to_unicode(val)
+                    elif mode == 2:
+                        new_val = self._convert_unicode_to_tcvn3(val)
                     else:
                         new_val = val
                     if new_val != val:
@@ -384,6 +390,11 @@ class FontConverterDialog(QDialog):
     def _convert_tcvn3_to_unicode(text):
         """Convert TCVN3 (ABC) encoded text to Unicode, char by char."""
         return ''.join(_TCVN3_TO_UNICODE.get(ch, ch) for ch in text)
+
+    @staticmethod
+    def _convert_unicode_to_tcvn3(text):
+        """Convert Unicode Vietnamese to TCVN3 code points (.VnTime font)."""
+        return ''.join(_UNICODE_TO_TCVN3.get(ch, ch) for ch in text)
 
     @staticmethod
     def _convert_vni_to_unicode(text):
