@@ -48,6 +48,7 @@ _STYLES = [
         "name_en": "By numeric code — Vietnamese",
         "qml": "style_code_vn.qml",
         "attr_hint": "forest_typ",
+        "lang": "vi",
     },
     {
         "id": "code_en",
@@ -55,6 +56,7 @@ _STYLES = [
         "name_en": "By numeric code — English",
         "qml": "style_code_en.qml",
         "attr_hint": "Code",
+        "lang": "en",
     },
     {
         "id": "ldlr_vn",
@@ -62,6 +64,7 @@ _STYLES = [
         "name_en": "By LDLR text code — Vietnamese",
         "qml": "style_ldlr_vn.qml",
         "attr_hint": "LDLR_VT",
+        "lang": "vi",
     },
     {
         "id": "ldlr_en",
@@ -69,6 +72,7 @@ _STYLES = [
         "name_en": "By LDLR text code — English",
         "qml": "style_ldlr_en.qml",
         "attr_hint": "LDLR_VT",
+        "lang": "en",
     },
 ]
 
@@ -219,10 +223,19 @@ class TT16Dialog(QDialog):
     # Colour table
     # -----------------------------------------------------------------
 
-    def _populate_table(self):
+    def _populate_table(self, lang=None):
+        """Fill colour table. *lang* follows the selected style (en/vi)."""
+        if lang is None:
+            lang = current_language()
+
+        # Update header labels to match language
+        if lang == "vi":
+            self.tbl.setHorizontalHeaderLabels(["Mã", "Màu", "Tên", "HEX"])
+        else:
+            self.tbl.setHorizontalHeaderLabels(["Code", "Colour", "Name", "HEX"])
+
         codes = self._master["codes"]
         self.tbl.setRowCount(len(codes))
-        lang = current_language()
 
         for i, c in enumerate(codes):
             # Code
@@ -243,7 +256,7 @@ class TT16Dialog(QDialog):
             ci.setBackground(clr)
             self.tbl.setItem(i, 1, ci)
 
-            # Name
+            # Name — follows the selected style's language
             name = c.get(f"name_{lang}", c.get("name_en", ""))
             self.tbl.setItem(i, 2, QTableWidgetItem(name))
 
@@ -280,6 +293,10 @@ class TT16Dialog(QDialog):
         hint = style.get("attr_hint", "")
         self.lbl_hint.setText(f"Trường gốc: \"{hint}\"" if hint else "")
         self._try_auto_field()
+
+        # Switch table language to match the selected style
+        style_lang = style.get("lang", current_language())
+        self._populate_table(lang=style_lang)
 
     def _try_auto_field(self):
         """Auto-select matching field based on style hint."""
