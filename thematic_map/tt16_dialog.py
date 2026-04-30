@@ -332,6 +332,9 @@ class TT16Dialog(QDialog):
     # -----------------------------------------------------------------
     # Apply
     # -----------------------------------------------------------------
+    # Build ID — change this to verify correct code is loaded
+    _BUILD = "v7-newrenderer"
+
     def _on_apply_clicked(self):
         layer = self.cmb_layer.currentLayer()
         if not layer:
@@ -353,11 +356,17 @@ class TT16Dialog(QDialog):
             QMessageBox.critical(self, "LVT4U", f"QML not found:\n{qml_path}")
             return
 
+        from qgis.core import QgsMessageLog, Qgis
+        QgsMessageLog.logMessage(
+            f"[{self._BUILD}] Apply: style={style['id']}, "
+            f"field={field_name}, qml={style['qml']}",
+            "LVT4U", Qgis.Info
+        )
+
         # ----------------------------------------------------------
-        # Step 1: Load QML via QDomDocument (most reliable method)
+        # Step 1: Load QML via QDomDocument
         # ----------------------------------------------------------
         from qgis.PyQt.QtXml import QDomDocument
-        from qgis.core import QgsReadWriteContext
 
         doc = QDomDocument()
         with open(qml_path, "r", encoding="utf-8") as f:
@@ -370,20 +379,28 @@ class TT16Dialog(QDialog):
             )
             return
 
-        # Import style from parsed document
         msg, ok = layer.importNamedStyle(doc)
         if not ok:
             QMessageBox.warning(self, "LVT4U", f"Import failed:\n{msg}")
             return
 
         # ----------------------------------------------------------
-        # Step 2: Remap classify attribute if user chose different field
+        # Step 2: Remap classify attribute if needed
         # ----------------------------------------------------------
         qml_attr = style["classify_attr"]
+        renderer = layer.renderer()
+        QgsMessageLog.logMessage(
+            f"[{self._BUILD}] Renderer type: {type(renderer).__name__}",
+            "LVT4U", Qgis.Info
+        )
+
         if field_name != qml_attr:
-            renderer = layer.renderer()
             if renderer and hasattr(renderer, 'setClassAttribute'):
                 renderer.setClassAttribute(field_name)
+                QgsMessageLog.logMessage(
+                    f"[{self._BUILD}] Remapped: {qml_attr} → {field_name}",
+                    "LVT4U", Qgis.Info
+                )
 
         # ----------------------------------------------------------
         # Step 3: Build NEW renderer with only matching categories
@@ -400,20 +417,13 @@ class TT16Dialog(QDialog):
 
         self.iface.messageBar().pushSuccess(
             "LVT4U",
-            f"✅ {_style_label(style)} → {layer.name()} "
+            f"✅ [{self._BUILD}] {_style_label(style)} → {layer.name()} "
             f"[{field_name}] — {kept}/{total} categories"
         )
 
     @staticmethod
     def _normalize(val):
-        """Normalize a value to a comparable string.
-
-        Handles type mismatch:
-          int/float 14 or 14.0 → "14"
-          str "14"             → "14"
-          str "TXG1"           → "TXG1"
-          NULL / None / QVariant(NULL) → ""
-        """
+        """Normalize a value to a comparable string."""
         if val is None:
             return ""
         try:
@@ -431,18 +441,37 @@ class TT16Dialog(QDialog):
             return str(val).strip()
 
     def _filter_to_data(self, layer, field_name):
-        """Create a new renderer containing ONLY categories with data.
-
-        Instead of deleting categories (unreliable), builds a brand-new
-        QgsCategorizedSymbolRenderer from scratch with only the matching
-        categories.
+        """Build a NEW renderer with ONLY categories matching actual data.
 
         Returns (total_before, kept_count).
         """
-        from qgis.core import QgsCategorizedSymbolRenderer
+        from qgis.core import (
+            QgsCategorizedSymbolRenderer, QgsMessageLog, Qgis
+        )
 
         renderer = layer.renderer()
-        if not isinstance(renderer, QgsCategorizedSymbolRenderer):
+        rtype = type(renderer).__name__
+
+        # Handle wrapped renderers
+        cat_renderer = None
+        if isinstance(renderer, QgsCategorizedSymbolRenderer):
+            cat_renderer = renderer
+        elif hasattr(renderer, 'embeddedRenderer'):
+            emb = renderer.embeddedRenderer()
+            if isinstance(emb, QgsCategorizedSymbolRenderer):
+                cat_renderer = emb
+                QgsMessageLog.logMessage(
+                    f"[{self._BUILD}] Unwrapped {rtype} → "
+                    f"{type(emb).__name__}",
+                    "LVT4U", Qgis.Info
+                )
+
+        if cat_renderer is None:
+            QgsMessageLog.logMessage(
+                f"[{self._BUILD}] SKIP filter: renderer={rtype} "
+                f"is not categorized!",
+                "LVT4U", Qgis.Warning
+            )
             return 0, 0
 
         idx = layer.fields().indexOf(field_name)
@@ -456,8 +485,14 @@ class TT16Dialog(QDialog):
             if nv:
                 unique_vals.add(nv)
 
+        QgsMessageLog.logMessage(
+            f"[{self._BUILD}] Data values ({len(unique_vals)}): "
+            f"{sorted(list(unique_vals))[:15]}...",
+            "LVT4U", Qgis.Info
+        )
+
         # Keep only categories whose value exists in data
-        old_cats = renderer.categories()
+        old_cats = cat_renderer.categories()
         total = len(old_cats)
         new_cats = []
         for cat in old_cats:
@@ -465,15 +500,28 @@ class TT16Dialog(QDialog):
             if cat_val and cat_val in unique_vals:
                 new_cats.append(cat)
 
-        # Build brand-new renderer with filtered categories
+        QgsMessageLog.logMessage(
+            f"[{self._BUILD}] Categories: {total} total → "
+            f"{len(new_cats)} kept, {total - len(new_cats)} removed",
+            "LVT4U", Qgis.Info
+        )
+
+        # Build brand-new renderer
         new_renderer = QgsCategorizedSymbolRenderer(field_name, new_cats)
         layer.setRenderer(new_renderer)
+
+        QgsMessageLog.logMessage(
+            f"[{self._BUILD}] New renderer set with "
+            f"{len(new_cats)} categories",
+            "LVT4U", Qgis.Info
+        )
 
         return total, len(new_cats)
 
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
 
 
 
