@@ -171,6 +171,10 @@ class LvtPlugin:
             "thematic.png", "Circular 16/2023", self._open_thematic_tt16, thematic_sub
         )
         self._add_action(
+            "thematic.png", "Circular 33", self._open_thematic_tt33, thematic_sub
+        )
+        thematic_sub.addSeparator()
+        self._add_action(
             "thematic.png", "Plot Labels", self._open_thematic_labels, thematic_sub
         )
 
@@ -367,7 +371,19 @@ class LvtPlugin:
 
     def _open_thematic_tt16(self):
         """Open the Thematic Map (TT16/2023) dialog."""
-        self._show_placeholder("Thematic Map — TT 16/2023")
+        if "tt16" not in self._dialogs:
+            from .thematic_map.tt16_dialog import TT16Dialog
+            self._dialogs["tt16"] = TT16Dialog(self.iface)
+
+        dlg = self._dialogs["tt16"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def _open_thematic_tt33(self):
+        """Open the Thematic Map (TT33) dialog."""
+        self._show_placeholder("Thematic Map — TT 33")
 
     def _open_thematic_labels(self):
         """Open the standalone Plot Labels dialog."""

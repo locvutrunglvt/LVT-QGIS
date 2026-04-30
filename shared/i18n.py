@@ -48,6 +48,8 @@ _TRANSLATIONS = {
     "Define CRS": "Định nghĩa hệ tọa độ",
     "CRS Catalog": "Danh mục hệ tọa độ",
     "About": "Thông tin",
+    "Circular 33": "Theo TT 33",
+    "Style Library": "Thư viện định dạng",
 
     # --- Messages ---
     "{module} — Coming soon!": "{module} — Sắp ra mắt!",
