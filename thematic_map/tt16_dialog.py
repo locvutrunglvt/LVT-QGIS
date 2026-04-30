@@ -333,7 +333,7 @@ class TT16Dialog(QDialog):
     # Apply
     # -----------------------------------------------------------------
     # Build ID — change this to verify correct code is loaded
-    _BUILD = "v10-import"
+    _BUILD = "v11-filter"
 
     def _on_apply_clicked(self):
         layer = self.cmb_layer.currentLayer()
@@ -455,15 +455,36 @@ class TT16Dialog(QDialog):
 
         _log(f"Filter: {total} → {len(new_cats)} kept")
 
-        new_renderer = QgsCategorizedSymbolRenderer(field_name, new_cats)
-        layer.setRenderer(new_renderer)
+        # Safety: only apply filter if we found matches
+        if new_cats:
+            new_renderer = QgsCategorizedSymbolRenderer(
+                field_name, new_cats
+            )
+            layer.setRenderer(new_renderer)
+            _log("New filtered renderer applied")
+        else:
+            _log("WARNING: 0 matches — keeping all categories")
 
         # ----------------------------------------------------------
-        # Step 4: Refresh
+        # Step 4: Force complete refresh (aggressive)
         # ----------------------------------------------------------
         layer.emitStyleChanged()
         layer.triggerRepaint()
-        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
+        # Use layerTreeRoot → model.refreshLayerLegend for nuclear refresh
+        try:
+            from qgis.core import QgsProject
+            tree_root = QgsProject.instance().layerTreeRoot()
+            node = tree_root.findLayer(layer.id())
+            if node:
+                model = self.iface.layerTreeView().layerTreeModel()
+                model.refreshLayerLegend(node)
+                _log("refreshLayerLegend() done")
+        except Exception as e:
+            _log(f"refreshLayerLegend error: {e}")
+            # Fallback
+            self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
         self.iface.mapCanvas().refresh()
 
         self.iface.messageBar().pushSuccess(
@@ -483,17 +504,22 @@ class TT16Dialog(QDialog):
                 return ""
         except ImportError:
             pass
+        # Convert to string first, then try numeric normalization
+        s = str(val).strip()
+        if not s:
+            return ""
         try:
-            f = float(val)
+            f = float(s)
             if f == int(f):
                 return str(int(f))
             return str(f)
         except (ValueError, TypeError):
-            return str(val).strip()
+            return s
 
     # -----------------------------------------------------------------
     def refresh_layers(self):
         pass
+
 
 
 
