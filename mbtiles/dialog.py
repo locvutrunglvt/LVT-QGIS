@@ -194,204 +194,205 @@ class MBTilesDialog(QDialog):
         self.chk_show_label.setChecked(True)
         lbl_ly.addWidget(self.chk_show_label)
 
-        # Two columns: Numerator | Denominator
-        cols = QHBoxLayout()
-        cols.setSpacing(10)
+        # ══════════════════════════════════════════════════════
+        # 2-column layout: Left = Fields | Right = Style+Preview
+        # ══════════════════════════════════════════════════════
+        main_cols = QHBoxLayout()
+        main_cols.setSpacing(8)
 
-        # -- Left: Numerator --
-        left_box = QVBoxLayout()
+        # ── LEFT COLUMN: Numerator + Denominator ──
+        left_col = QVBoxLayout()
+        left_col.setSpacing(4)
+
+        # Numerator
         self.lbl_num = QLabel()
         self.lbl_num.setStyleSheet("font-weight:bold;")
-        left_box.addWidget(self.lbl_num)
+        left_col.addWidget(self.lbl_num)
 
         self.scroll_num = QScrollArea()
         self.scroll_num.setWidgetResizable(True)
-        self.scroll_num.setFixedHeight(120)
         self.w_num = QWidget()
         self.ly_num = QVBoxLayout(self.w_num)
         self.ly_num.setSpacing(2)
         self.ly_num.setContentsMargins(4, 4, 4, 4)
         self.scroll_num.setWidget(self.w_num)
-        left_box.addWidget(self.scroll_num)
+        left_col.addWidget(self.scroll_num, 1)
 
         h_ns = QHBoxLayout()
+        h_ns.setSpacing(4)
         self.lbl_num_sep = QLabel()
         self.edt_num_sep = QLineEdit("-")
-        self.edt_num_sep.setFixedWidth(40)
+        self.edt_num_sep.setFixedWidth(35)
         self.lbl_num_sfx = QLabel("Suffix:")
         self.edt_num_sfx = QLineEdit()
-        self.edt_num_sfx.setFixedWidth(60)
+        self.edt_num_sfx.setFixedWidth(50)
         self.edt_num_sfx.setPlaceholderText("ha, km...")
         h_ns.addWidget(self.lbl_num_sep)
         h_ns.addWidget(self.edt_num_sep)
         h_ns.addWidget(self.lbl_num_sfx)
         h_ns.addWidget(self.edt_num_sfx)
         h_ns.addStretch()
-        left_box.addLayout(h_ns)
-        cols.addLayout(left_box)
+        left_col.addLayout(h_ns)
 
-        # -- Right: Denominator --
-        right_box = QVBoxLayout()
+        # Denominator
         self.lbl_den = QLabel()
         self.lbl_den.setStyleSheet("font-weight:bold;")
-        right_box.addWidget(self.lbl_den)
+        left_col.addWidget(self.lbl_den)
 
         self.scroll_den = QScrollArea()
         self.scroll_den.setWidgetResizable(True)
-        self.scroll_den.setFixedHeight(120)
         self.w_den = QWidget()
         self.ly_den = QVBoxLayout(self.w_den)
         self.ly_den.setSpacing(2)
         self.ly_den.setContentsMargins(4, 4, 4, 4)
         self.scroll_den.setWidget(self.w_den)
-        right_box.addWidget(self.scroll_den)
+        left_col.addWidget(self.scroll_den, 1)
 
         h_ds = QHBoxLayout()
+        h_ds.setSpacing(4)
         self.lbl_den_sep = QLabel()
         self.edt_den_sep = QLineEdit("-")
-        self.edt_den_sep.setFixedWidth(40)
+        self.edt_den_sep.setFixedWidth(35)
         self.lbl_den_sfx = QLabel("Suffix:")
         self.edt_den_sfx = QLineEdit()
-        self.edt_den_sfx.setFixedWidth(60)
+        self.edt_den_sfx.setFixedWidth(50)
         self.edt_den_sfx.setPlaceholderText("ha, km...")
         h_ds.addWidget(self.lbl_den_sep)
         h_ds.addWidget(self.edt_den_sep)
         h_ds.addWidget(self.lbl_den_sfx)
         h_ds.addWidget(self.edt_den_sfx)
         h_ds.addStretch()
-        right_box.addLayout(h_ds)
-        cols.addLayout(right_box)
+        left_col.addLayout(h_ds)
 
-        lbl_ly.addLayout(cols)
+        main_cols.addLayout(left_col, 4)
 
-        # Font + Scale row (compact grid)
+        # ── RIGHT COLUMN: Font/Style + Preview ──
+        right_col = QVBoxLayout()
+        right_col.setSpacing(3)
+
+        # Font + Scale compact grid (3 rows)
         fg = QGridLayout()
-        fg.setSpacing(4)
+        fg.setSpacing(3)
+        fg.setContentsMargins(0, 0, 0, 0)
 
+        # Row 0: Font | Size
         self.lbl_font = QLabel()
         self.cbo_font = QFontComboBox()
         self.cbo_font.setCurrentFont(QFont("Arial"))
-        fg.addWidget(self.lbl_font, 0, 0)
-        fg.addWidget(self.cbo_font, 0, 1, 1, 2)
-
         self.lbl_fsize = QLabel()
         self.spn_fsize = QSpinBox()
         self.spn_fsize.setRange(6, 72)
         self.spn_fsize.setValue(10)
+        fg.addWidget(self.lbl_font, 0, 0)
+        fg.addWidget(self.cbo_font, 0, 1, 1, 2)
         fg.addWidget(self.lbl_fsize, 0, 3)
         fg.addWidget(self.spn_fsize, 0, 4)
 
+        # Row 1: Color | Bold | LineH | Underline | Spacing
         self.lbl_fcolor = QLabel()
         self.btn_font_color = QPushButton()
-        self.btn_font_color.setFixedSize(70, 22)
+        self.btn_font_color.setFixedSize(50, 20)
         self.btn_font_color.clicked.connect(lambda: self._pick_color("font"))
-        fg.addWidget(self.lbl_fcolor, 1, 0)
-        fg.addWidget(self.btn_font_color, 1, 1)
-
         self.chk_bold = QCheckBox()
-        fg.addWidget(self.chk_bold, 1, 2)
-
         self.lbl_line_h = QLabel()
         self.spn_line_h = QDoubleSpinBox()
         self.spn_line_h.setRange(5, 300)
         self.spn_line_h.setValue(20)
         self.spn_line_h.setSuffix(" %")
-        fg.addWidget(self.lbl_line_h, 1, 3)
-        fg.addWidget(self.spn_line_h, 1, 4)
-
         self.lbl_uline = QLabel()
         self.spn_uline = QSpinBox()
         self.spn_uline.setRange(3, 50)
         self.spn_uline.setValue(8)
-        fg.addWidget(self.lbl_uline, 2, 0)
-        fg.addWidget(self.spn_uline, 2, 1)
-
         self.lbl_spacing = QLabel()
         self.spn_spacing = QSpinBox()
         self.spn_spacing.setRange(0, 15)
         self.spn_spacing.setValue(5)
-        fg.addWidget(self.lbl_spacing, 2, 2)
-        fg.addWidget(self.spn_spacing, 2, 3)
+        fg.addWidget(self.lbl_fcolor, 1, 0)
+        fg.addWidget(self.btn_font_color, 1, 1)
+        fg.addWidget(self.chk_bold, 1, 2)
+        fg.addWidget(self.lbl_line_h, 1, 3)
+        fg.addWidget(self.spn_line_h, 1, 4)
 
-        # Scale visibility — intuitive labels
+        # Row 2: Underline | Spacing | Scale In | Scale Out
         self.lbl_zoom_in = QLabel()
         self.cbo_zoom_in = QComboBox()
         for s in _SCALES:
             self.cbo_zoom_in.addItem(f"1:{s:,}".replace(",", "."), s)
         self.cbo_zoom_in.setCurrentIndex(_SCALES.index(1000))
-        fg.addWidget(self.lbl_zoom_in, 3, 0)
-        fg.addWidget(self.cbo_zoom_in, 3, 1)
-
         self.lbl_zoom_out = QLabel()
         self.cbo_zoom_out = QComboBox()
         for s in _SCALES:
             self.cbo_zoom_out.addItem(f"1:{s:,}".replace(",", "."), s)
         self.cbo_zoom_out.setCurrentIndex(_SCALES.index(7500))
-        fg.addWidget(self.lbl_zoom_out, 3, 2)
-        fg.addWidget(self.cbo_zoom_out, 3, 3)
+        fg.addWidget(self.lbl_uline, 2, 0)
+        fg.addWidget(self.spn_uline, 2, 1)
+        fg.addWidget(self.lbl_spacing, 2, 2)
+        fg.addWidget(self.spn_spacing, 2, 3)
 
-        # Buffer (label outline)
+        # Row 3: Buffer + Background (all on one row)
         self.chk_buffer = QCheckBox()
         self.chk_buffer.setChecked(True)
-        fg.addWidget(self.chk_buffer, 4, 0)
-
         self.lbl_buf_color = QLabel()
         self.btn_buf_color = QPushButton()
-        self.btn_buf_color.setFixedSize(70, 22)
+        self.btn_buf_color.setFixedSize(50, 20)
         self.btn_buf_color.clicked.connect(lambda: self._pick_color("buffer"))
-        fg.addWidget(self.lbl_buf_color, 4, 1)
-        fg.addWidget(self.btn_buf_color, 4, 2)
-
         self.lbl_buf_size = QLabel()
         self.spn_buf_size = QDoubleSpinBox()
         self.spn_buf_size.setRange(0.1, 10.0)
         self.spn_buf_size.setValue(1.0)
         self.spn_buf_size.setSingleStep(0.5)
         self.spn_buf_size.setSuffix(" mm")
-        fg.addWidget(self.lbl_buf_size, 4, 3)
-        fg.addWidget(self.spn_buf_size, 4, 4)
+        fg.addWidget(self.chk_buffer, 3, 0)
+        fg.addWidget(self.lbl_buf_color, 3, 1)
+        fg.addWidget(self.btn_buf_color, 3, 2)
+        fg.addWidget(self.lbl_buf_size, 3, 3)
+        fg.addWidget(self.spn_buf_size, 3, 4)
 
-        # Background (label background shape)
+        # Row 4: BG + BG Color + Radius | Scale
         self.chk_bg = QCheckBox()
         self.chk_bg.setChecked(False)
-        fg.addWidget(self.chk_bg, 5, 0)
-
         self.lbl_bg_color = QLabel()
         self.btn_bg_color = QPushButton()
-        self.btn_bg_color.setFixedSize(70, 22)
+        self.btn_bg_color.setFixedSize(50, 20)
         self.btn_bg_color.clicked.connect(lambda: self._pick_color("bg"))
-        fg.addWidget(self.lbl_bg_color, 5, 1)
-        fg.addWidget(self.btn_bg_color, 5, 2)
-
         self.lbl_bg_radius = QLabel()
         self.spn_bg_radius = QDoubleSpinBox()
         self.spn_bg_radius.setRange(0, 20.0)
         self.spn_bg_radius.setValue(2.0)
         self.spn_bg_radius.setSingleStep(0.5)
         self.spn_bg_radius.setSuffix(" mm")
-        fg.addWidget(self.lbl_bg_radius, 5, 3)
-        fg.addWidget(self.spn_bg_radius, 5, 4)
+        fg.addWidget(self.chk_bg, 4, 0)
+        fg.addWidget(self.lbl_bg_color, 4, 1)
+        fg.addWidget(self.btn_bg_color, 4, 2)
+        fg.addWidget(self.lbl_bg_radius, 4, 3)
+        fg.addWidget(self.spn_bg_radius, 4, 4)
 
-        lbl_ly.addLayout(fg)
+        # Scale on row 4 right side
+        fg.addWidget(self.lbl_zoom_in, 3, 5)
+        fg.addWidget(self.cbo_zoom_in, 3, 6)
+        fg.addWidget(self.lbl_zoom_out, 4, 5)
+        fg.addWidget(self.cbo_zoom_out, 4, 6)
 
-        # Unified Preview: polygon + label in one view
+        right_col.addLayout(fg)
+
+        # Preview
         prev_hdr = QHBoxLayout()
         self.lbl_preview_l = QLabel()
-        self.lbl_preview_l.setStyleSheet("font-weight:bold;margin-top:4px;")
+        self.lbl_preview_l.setStyleSheet("font-weight:bold;margin-top:2px;")
         prev_hdr.addWidget(self.lbl_preview_l)
         prev_hdr.addStretch()
         self.chk_sat_bg = QCheckBox()
         self.chk_sat_bg.stateChanged.connect(self._update_preview)
         prev_hdr.addWidget(self.chk_sat_bg)
-        lbl_ly.addLayout(prev_hdr)
+        right_col.addLayout(prev_hdr)
 
         self.lbl_preview = QLabel()
         self.lbl_preview.setAlignment(Qt.AlignCenter)
-        self.lbl_preview.setFixedHeight(120)
+        self.lbl_preview.setMinimumHeight(80)
         self.lbl_preview.setStyleSheet(
             "background:white;border:1px solid #ccc;border-radius:4px;"
         )
-        lbl_ly.addWidget(self.lbl_preview)
+        right_col.addWidget(self.lbl_preview, 1)
 
         # Expression
         self.txt_expr = QLineEdit()
@@ -399,7 +400,10 @@ class MBTilesDialog(QDialog):
         self.txt_expr.setStyleSheet(
             "background:#f0f0f0;font-family:monospace;font-size:11px;"
         )
-        lbl_ly.addWidget(self.txt_expr)
+        right_col.addWidget(self.txt_expr)
+
+        main_cols.addLayout(right_col, 6)
+        lbl_ly.addLayout(main_cols, 1)
 
         self.grp_label.setLayout(lbl_ly)
         ly.addWidget(self.grp_label)
