@@ -61,6 +61,7 @@ class LvtPlugin:
             self.lvt_menu,
         )
         self._build_menu()
+        self._install_style_library()
 
     def unload(self):
         """Remove the LVT menu from the QGIS menu bar and clean up."""
@@ -428,6 +429,48 @@ class LvtPlugin:
     # ------------------------------------------------------------------
     # Utilities
     # ------------------------------------------------------------------
+
+    def _install_style_library(self):
+        """Import the TCVN 11565-2016 symbol library into QGIS Style Manager.
+
+        Runs once per user profile. Uses QSettings flag to avoid re-importing
+        on every plugin load.
+        """
+        settings_key = "LVT4U/style_imported_v1"
+        if QSettings().value(settings_key, False, type=bool):
+            return  # Already imported
+
+        xml_path = os.path.join(
+            self.plugin_dir, "thematic_map", "data",
+            "tcvn11565_style.xml"
+        )
+        if not os.path.isfile(xml_path):
+            return
+
+        try:
+            from qgis.core import QgsStyle
+            style = QgsStyle.defaultStyle()
+            count_before = style.symbolCount()
+            ok = style.importXml(xml_path)
+            if ok:
+                count_after = style.symbolCount()
+                added = count_after - count_before
+                QSettings().setValue(settings_key, True)
+                self.iface.messageBar().pushSuccess(
+                    "LVT4U",
+                    f"✅ TCVN 11565-2016 style library installed "
+                    f"({added} symbols added to Style Manager)"
+                )
+            else:
+                self.iface.messageBar().pushWarning(
+                    "LVT4U",
+                    "⚠️ Failed to import TCVN 11565-2016 style library"
+                )
+        except Exception as e:
+            self.iface.messageBar().pushWarning(
+                "LVT4U",
+                f"⚠️ Style import error: {e}"
+            )
 
     def _show_placeholder(self, module_name):
         """Display a message bar notification for modules not yet implemented.
