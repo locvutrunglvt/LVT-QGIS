@@ -21,7 +21,8 @@ from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QAbstractItemView, QFrame,
-    QTabWidget, QWidget, QTextBrowser,
+    QTabWidget, QWidget, QTextBrowser, QRadioButton,
+    QButtonGroup,
 )
 from qgis.core import QgsVectorLayer, QgsWkbTypes
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
@@ -35,15 +36,19 @@ _QML_DIR = os.path.join(_DATA_DIR, "qml", "polygon")
 # ---------------------------------------------------------------------------
 # Style definitions
 # ---------------------------------------------------------------------------
-_STYLES = [
+# ---------------------------------------------------------------------------
+# Style definitions — NEW (TT16/2023) and OLD (TCVN 11565:2016)
+# ---------------------------------------------------------------------------
+_STYLES_NEW = [
     {
         "id": "ldlr_vn",
         "label_vi": "LDLR (mã chữ) — Tiếng Việt",
         "label_en": "LDLR (text code) — Vietnamese",
         "qml": "style_ldlr_vn.qml",
         "classify_attr": "LDLR_VT",
-        "value_type": "text",       # text_code column in master
+        "value_type": "text",
         "lang": "vi",
+        "standard": "new",
     },
     {
         "id": "ldlr_en",
@@ -53,6 +58,7 @@ _STYLES = [
         "classify_attr": "LDLR_VT",
         "value_type": "text",
         "lang": "en",
+        "standard": "new",
     },
     {
         "id": "code_vn",
@@ -60,8 +66,9 @@ _STYLES = [
         "label_en": "Code (numeric 1–93) — Vietnamese",
         "qml": "style_code_vn.qml",
         "classify_attr": "forest_typ",
-        "value_type": "numeric",    # num_code column in master
+        "value_type": "numeric",
         "lang": "vi",
+        "standard": "new",
     },
     {
         "id": "code_en",
@@ -71,6 +78,50 @@ _STYLES = [
         "classify_attr": "Code",
         "value_type": "numeric",
         "lang": "en",
+        "standard": "new",
+    },
+]
+
+_STYLES_OLD = [
+    {
+        "id": "old_ldlr_vn",
+        "label_vi": "LDLR (mã chữ) — Tiếng Việt",
+        "label_en": "LDLR (text code) — Vietnamese",
+        "qml": "style_old_ldlr_vn.qml",
+        "classify_attr": "LDLR_VT",
+        "value_type": "text",
+        "lang": "vi",
+        "standard": "old",
+    },
+    {
+        "id": "old_ldlr_en",
+        "label_vi": "LDLR (mã chữ) — Tiếng Anh",
+        "label_en": "LDLR (text code) — English",
+        "qml": "style_old_ldlr_en.qml",
+        "classify_attr": "LDLR_VT",
+        "value_type": "text",
+        "lang": "en",
+        "standard": "old",
+    },
+    {
+        "id": "old_code_vn",
+        "label_vi": "Code (mã số 1–93) — Tiếng Việt",
+        "label_en": "Code (numeric 1–93) — Vietnamese",
+        "qml": "style_old_code_vn.qml",
+        "classify_attr": "forest_typ",
+        "value_type": "numeric",
+        "lang": "vi",
+        "standard": "old",
+    },
+    {
+        "id": "old_code_en",
+        "label_vi": "Code (mã số 1–93) — Tiếng Anh",
+        "label_en": "Code (numeric 1–93) — English",
+        "qml": "style_old_code_en.qml",
+        "classify_attr": "Code",
+        "value_type": "numeric",
+        "lang": "en",
+        "standard": "old",
     },
 ]
 
@@ -146,6 +197,36 @@ class TT16Dialog(QDialog):
         ly = QVBoxLayout(parent)
         ly.setSpacing(8)
 
+        # Standard selector row: Old / New
+        std_row = QHBoxLayout()
+        std_row.setSpacing(8)
+        lbl_std = QLabel("📐 Tiêu chuẩn / Standard:")
+        lbl_std.setFont(QFont("Segoe UI", 9, QFont.Bold))
+        lbl_std.setStyleSheet("color:#333;")
+        std_row.addWidget(lbl_std)
+
+        self._std_group = QButtonGroup(parent)
+        self.rb_new = QRadioButton("🆕 TT 16/2023 (mới)")
+        self.rb_new.setChecked(True)
+        self.rb_new.setStyleSheet(
+            "QRadioButton{font-weight:bold;color:#1565c0;padding:4px 12px;"
+            "border:2px solid #1565c0;border-radius:4px;background:#e3f2fd;}"
+            "QRadioButton:checked{background:#bbdefb;}"
+        )
+        self.rb_old = QRadioButton("📗 TCVN 11565 (cũ)")
+        self.rb_old.setStyleSheet(
+            "QRadioButton{font-weight:bold;color:#2e7d32;padding:4px 12px;"
+            "border:2px solid #2e7d32;border-radius:4px;background:#e8f5e9;}"
+            "QRadioButton:checked{background:#c8e6c9;}"
+        )
+        self._std_group.addButton(self.rb_new, 0)
+        self._std_group.addButton(self.rb_old, 1)
+        self._std_group.idClicked.connect(self._on_standard_changed)
+        std_row.addWidget(self.rb_new)
+        std_row.addWidget(self.rb_old)
+        std_row.addStretch()
+        ly.addLayout(std_row)
+
         # Top row: Layer | Style | Field
         top = QHBoxLayout()
         top.setSpacing(10)
@@ -169,8 +250,7 @@ class TT16Dialog(QDialog):
         gs.setContentsMargins(8, 16, 8, 6)
         gs.setSpacing(4)
         self.cmb_style = QComboBox()
-        for s in _STYLES:
-            self.cmb_style.addItem(_style_label(s), s)
+        self._populate_styles()  # Fill based on selected standard
         self.cmb_style.currentIndexChanged.connect(self._on_style_changed)
         gs.addWidget(self.cmb_style)
         self.lbl_style_info = QLabel("")
@@ -250,6 +330,25 @@ class TT16Dialog(QDialog):
         btn_row.addWidget(btn_close, 1)
 
         ly.addLayout(btn_row)
+
+    # -----------------------------------------------------------------
+    # Standard switching helpers
+    # -----------------------------------------------------------------
+    def _populate_styles(self):
+        """Fill style combo based on selected standard (Old/New)."""
+        self.cmb_style.blockSignals(True)
+        self.cmb_style.clear()
+        styles = _STYLES_NEW if self.rb_new.isChecked() else _STYLES_OLD
+        for s in styles:
+            self.cmb_style.addItem(_style_label(s), s)
+        self.cmb_style.blockSignals(False)
+
+    def _on_standard_changed(self, btn_id):
+        """Handle Old/New standard toggle."""
+        self._populate_styles()
+        # Re-trigger style info and field auto-detect
+        if self.cmb_style.count() > 0:
+            self._on_style_changed(0)
 
     def _build_ref_tab(self, parent):
         ly = QVBoxLayout(parent)
