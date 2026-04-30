@@ -382,9 +382,19 @@ class ExcelGisDialog(QDialog):
         if not rows:
             return
 
-        # First row = headers
-        self._headers = [str(h) if h else f"Col_{i}"
-                         for i, h in enumerate(rows[0])]
+        # First row = headers — deduplicate names
+        raw_headers = [str(h).strip() if h else f"Col_{i}"
+                       for i, h in enumerate(rows[0])]
+        seen = {}
+        deduped = []
+        for h in raw_headers:
+            if h in seen:
+                seen[h] += 1
+                deduped.append(f"{h}_{seen[h]}")
+            else:
+                seen[h] = 0
+                deduped.append(h)
+        self._headers = deduped
         self._data_rows = rows[1:]
 
         self.lbl_rows.setText(
