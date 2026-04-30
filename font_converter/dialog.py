@@ -5,8 +5,11 @@ LVT Font Converter — Convert font encoding for a vector layer and export.
 Supports:
   - TCVN3 (ABC) → Unicode
   - VNI → Unicode
-  - No conversion (just re-export with format/CRS change)
-  - Export to SHP (with .cpg for MapInfo) or MapInfo TAB
+  - Unicode → TCVN3 (.VnTime for MapInfo)
+  - No conversion (re-export with format/CRS change)
+  - Export to SHP (with .cpg) or MapInfo TAB
+
+Mapping tables based on HCMGIS reference implementation.
 
 Author: Lộc Vũ Trung (LVT) / Slow Forest
 License: GPL-3.0
@@ -30,72 +33,51 @@ from qgis.gui import QgsMapLayerComboBox
 from ..shared.i18n import current_language
 
 # ═══════════════════════════════════════════════════════════════
-# TCVN3 → Unicode mapping (byte-level, comprehensive)
+# Parallel encoding lists (HCMGIS-compatible, proven mapping)
+# Index-matched: _UNICODE[i] ↔ _TCVN3[i]
 # ═══════════════════════════════════════════════════════════════
-_TCVN3_TO_UNICODE = {
-    # Lowercase - ă group
-    '\xb0': 'ă', '\xb1': 'ắ', '\xb2': 'ằ', '\xb3': 'ẳ', '\xb4': 'ẵ', '\xb5': 'ặ',
-    # â group
-    '\xa9': 'â', '\xca': 'ấ', '\xa7': 'ầ', '\xa8': 'ẩ', '\xc9': 'ẫ', '\xcb': 'ậ',
-    # ê group
-    '\xaa': 'ê', '\xd5': 'ế', '\xd2': 'ề', '\xd3': 'ể', '\xd4': 'ễ', '\xd6': 'ệ',
-    # ô group
-    '\xab': 'ô', '\xe8': 'ố', '\xe5': 'ồ', '\xe6': 'ổ', '\xe7': 'ỗ', '\xe9': 'ộ',
-    # ơ group
-    '\xac': 'ơ', '\xed': 'ớ', '\xea': 'ờ', '\xeb': 'ở', '\xec': 'ỡ', '\xee': 'ợ',
-    # ư group
-    '\xad': 'ư', '\xf8': 'ứ', '\xf5': 'ừ', '\xf6': 'ử', '\xf7': 'ữ', '\xf9': 'ự',
-    # đ
-    '\xae': 'đ',
-    # Standalone tones: a e i o u y
-    '\xe1': 'á', '\xe0': 'à', '\xe2': 'ả', '\xe3': 'ã', '\xe4': 'ạ',
-    '\xd0': 'é', '\xcf': 'è', '\xd1': 'ẻ', '\xce': 'ẽ', '\xd7': 'ẹ',
-    '\xdd': 'í', '\xd8': 'ì', '\xd9': 'ỉ', '\xdc': 'ĩ', '\xde': 'ị',
-    '\xf3': 'ó', '\xef': 'ò', '\xf0': 'ỏ', '\xf2': 'õ', '\xf4': 'ọ',
-    '\xfa': 'ú', '\xf1': 'ù', '\xfb': 'ủ', '\xfc': 'ũ', '\xfe': 'ụ',
-    '\xfd': 'ý', '\xdf': 'ỳ', '\xdb': 'ỷ', '\xda': 'ỹ', '\xff': 'ỵ',
-    # Uppercase
-    '\x80': 'Ă', '\x81': 'Ắ', '\x82': 'Ằ', '\x83': 'Ẳ', '\x84': 'Ẵ', '\x85': 'Ặ',
-    '\x86': 'Â', '\x87': 'Ấ', '\x88': 'Ầ', '\x89': 'Ẩ', '\x8a': 'Ẫ', '\x8b': 'Ậ',
-    '\x8c': 'Ê', '\x8d': 'Ế', '\x8e': 'Ề', '\x8f': 'Ể', '\x90': 'Ễ', '\x91': 'Ệ',
-    '\x92': 'Ô', '\x93': 'Ố', '\x94': 'Ồ', '\x95': 'Ổ', '\x96': 'Ỗ', '\x97': 'Ộ',
-    '\x9e': 'Ơ', '\x9a': 'Ớ', '\x9b': 'Ờ', '\x9c': 'Ở', '\x9d': 'Ỡ', '\x9f': 'Ợ',
-    '\xa0': 'Ư', '\xa1': 'Ứ', '\xa2': 'Ừ', '\xa3': 'Ử', '\xa4': 'Ữ', '\xa5': 'Ự',
-    '\xa6': 'Đ',
-    '\xc1': 'Á', '\xc0': 'À', '\xc2': 'Ả', '\xc3': 'Ã', '\xc4': 'Ạ',
-    '\xc5': 'É', '\xc6': 'È', '\xc7': 'Ẻ', '\xc8': 'Ẽ', '\x98': 'Ẹ',
-    '\xcc': 'Í', '\x99': 'Ì', '\xcd': 'Ỉ',
-}
+_UNICODE = [
+    'â','Â','ă','Ă','đ','Đ','ê','Ê','ô','Ô','ơ','Ơ','ư','Ư',
+    'á','Á','à','À','ả','Ả','ã','Ã','ạ','Ạ',
+    'ấ','Ấ','ầ','Ầ','ẩ','Ẩ','ẫ','Ẫ','ậ','Ậ',
+    'ắ','Ắ','ằ','Ằ','ẳ','Ẳ','ẵ','Ẵ','ặ','Ặ',
+    'é','É','è','È','ẻ','Ẻ','ẽ','Ẽ','ẹ','Ẹ',
+    'ế','Ế','ề','Ề','ể','Ể','ễ','Ễ','ệ','Ệ',
+    'í','Í','ì','Ì','ỉ','Ỉ','ĩ','Ĩ','ị','Ị',
+    'ó','Ó','ò','Ò','ỏ','Ỏ','õ','Õ','ọ','Ọ',
+    'ố','Ố','ồ','Ồ','ổ','Ổ','ỗ','Ỗ','ộ','Ộ',
+    'ớ','Ớ','ờ','Ờ','ở','Ở','ỡ','Ỡ','ợ','Ợ',
+    'ú','Ú','ù','Ù','ủ','Ủ','ũ','Ũ','ụ','Ụ',
+    'ứ','Ứ','ừ','Ừ','ử','Ử','ữ','Ữ','ự','Ự',
+    'ỳ','Ỳ','ỷ','Ỷ','ỹ','Ỹ','ỵ','Ỵ','ý','Ý',
+]
 
-# Build reverse: Unicode char → TCVN3 code point (for .VnTime font)
-_UNICODE_TO_TCVN3 = {v: k for k, v in _TCVN3_TO_UNICODE.items()}
+_TCVN3 = [
+    '©','¢','¨','¡','®','§','ª','£','«','¤','¬','¥','\xad','¦',
+    '¸','¸','µ','µ','¶','¶','·','·','¹','¹',
+    'Ê','Ê','Ç','Ç','È','È','É','É','Ë','Ë',
+    '¾','¾','»','»','¼','¼','½','½','Æ','Æ',
+    'Ð','Ð','Ì','Ì','Î','Î','Ï','Ï','Ñ','Ñ',
+    'Õ','Õ','Ò','Ò','Ó','Ó','Ô','Ô','Ö','Ö',
+    'Ý','Ý','×','×','Ø','Ø','Ü','Ü','Þ','Þ',
+    'ã','ã','ß','ß','á','á','â','â','ä','ä',
+    'è','è','å','å','æ','æ','ç','ç','é','é',
+    'í','í','ê','ê','ë','ë','ì','ì','î','î',
+    'ó','ó','ï','ï','ñ','ñ','ò','ò','ô','ô',
+    'ø','ø','õ','õ','ö','ö','÷','÷','ù','ù',
+    'ú','ú','û','û','ü','ü','þ','þ','ý','ý',
+]
 
-# ═══════════════════════════════════════════════════════════════
-# VNI → Unicode mapping
-# ═══════════════════════════════════════════════════════════════
-_VNI_TO_UNICODE = {
-    'aê': 'ă', 'AÊ': 'Ă',
-    'aé': 'ắ', 'Aé': 'Ắ', 'aè': 'ằ', 'Aè': 'Ằ',
-    'aú': 'ẳ', 'Aú': 'Ẳ', 'aû': 'ẵ', 'Aû': 'Ẵ', 'aë': 'ặ', 'Aë': 'Ặ',
-    'aâ': 'â', 'AÂ': 'Â',
-    'aá': 'ấ', 'Aá': 'Ấ', 'aà': 'ầ', 'Aà': 'Ầ',
-    'aå': 'ẩ', 'Aå': 'Ẩ', 'aã': 'ẫ', 'Aã': 'Ẫ', 'aä': 'ậ', 'Aä': 'Ậ',
-    'eâ': 'ê', 'EÂ': 'Ê',
-    'eá': 'ế', 'Eá': 'Ế', 'eà': 'ề', 'Eà': 'Ề',
-    'eå': 'ể', 'Eå': 'Ể', 'eã': 'ễ', 'Eã': 'Ễ', 'eä': 'ệ', 'Eä': 'Ệ',
-    'oâ': 'ô', 'OÂ': 'Ô',
-    'oá': 'ố', 'Oá': 'Ố', 'oà': 'ồ', 'Oà': 'Ồ',
-    'oå': 'ổ', 'Oå': 'Ổ', 'oã': 'ỗ', 'Oã': 'Ỗ', 'oä': 'ộ', 'Oä': 'Ộ',
-    'ôù': 'ớ', 'ôø': 'ờ', 'ôû': 'ở', 'ôõ': 'ỡ', 'ôï': 'ợ',
-    'öù': 'ứ', 'öø': 'ừ', 'öû': 'ử', 'öõ': 'ữ', 'öï': 'ự',
-    'ô': 'ơ', 'Ô': 'Ơ', 'ö': 'ư', 'Ö': 'Ư',
-    'ñ': 'đ', 'Ñ': 'Đ',
-    'aù': 'á', 'aø': 'à', 'aõ': 'ã', 'aï': 'ạ',
-    'eù': 'é', 'eø': 'è', 'eû': 'ẻ', 'eõ': 'ẽ', 'eï': 'ẹ',
-    'où': 'ó', 'oø': 'ò', 'oû': 'ỏ', 'oõ': 'õ', 'oï': 'ọ',
-    'uù': 'ú', 'uø': 'ù', 'uû': 'ủ', 'uõ': 'ũ', 'uï': 'ụ',
-    'yù': 'ý', 'yø': 'ỳ', 'yû': 'ỷ', 'yõ': 'ỹ',
-}
+# Build fast lookup dicts from the parallel lists
+_UNI2TCVN = {}
+_TCVN2UNI = {}
+for _i, _u in enumerate(_UNICODE):
+    _t = _TCVN3[_i]
+    _UNI2TCVN[_u] = _t
+    # For TCVN3→Unicode, TCVN3 has duplicate chars for upper/lower
+    # (e.g. '¸' maps to both 'á' and 'Á'). We keep the first (lowercase).
+    if _t not in _TCVN2UNI:
+        _TCVN2UNI[_t] = _u
 
 # CRS list (shared across modules)
 from .._crs_list import CRS_LIST
@@ -119,7 +101,7 @@ class FontConverterDialog(QDialog):
         hdr = QLabel("<h3>🔤 Font Converter / Chuyển đổi Font chữ</h3>")
         ly.addWidget(hdr)
         ly.addWidget(QLabel(
-            "Chuyển font TCVN3/VNI → Unicode, xuất Shapefile hoặc MapInfo TAB."
+            "Chuyển font TCVN3/VNI ↔ Unicode, xuất Shapefile hoặc MapInfo TAB."
         ))
 
         form = QFormLayout()
@@ -207,11 +189,11 @@ class FontConverterDialog(QDialog):
         if not target_crs.isValid():
             target_crs = layer.crs()
 
-        # --- Mode ---
-        mode = self.cmb_from.currentIndex()  # 0=TCVN3→Uni, 1=VNI→Uni, 2=Uni→TCVN3, 3=none
+        # --- Mode: 0=TCVN3→Uni, 1=VNI→Uni, 2=Uni→TCVN3, 3=none ---
+        mode = self.cmb_from.currentIndex()
 
-        # --- Format ---
-        fmt_idx = self.cmb_format.currentIndex()  # 0=SHP, 1=TAB
+        # --- Format: 0=SHP, 1=TAB ---
+        fmt_idx = self.cmb_format.currentIndex()
         if fmt_idx == 1:
             filt = "MapInfo TAB (*.tab)"
             driver = "MapInfo File"
@@ -237,102 +219,81 @@ class FontConverterDialog(QDialog):
             self._export(layer, path, driver, ext, mode, target_crs)
         except Exception as e:
             self.log.append(f"❌ Exception: {e}")
+            import traceback
+            self.log.append(traceback.format_exc())
             QMessageBox.critical(self, "Error", str(e))
         finally:
             self.btn_convert.setEnabled(True)
             self.progress.setVisible(False)
 
     def _export(self, layer, path, driver, ext, mode, target_crs):
-        """Build a memory layer with converted text, then write to disk."""
+        """Convert text fields in memory, then write using QgsVectorFileWriter."""
+        # Identify string fields
+        fields_list = []
+        for field in layer.fields():
+            if field.type() == QVariant.String:
+                fields_list.append(field.name())
+
         features = list(layer.getFeatures())
         total = len(features)
-        self.progress.setMaximum(total + 10)
-        self.progress.setValue(0)
+        self.progress.setMaximum(total + 5)
 
-        fields = layer.fields()
-        text_field_indices = [
-            i for i in range(fields.count())
-            if fields.field(i).typeName().lower() in ('string', 'text', 'varchar')
+        mode_labels = [
+            "TCVN3 → Unicode", "VNI → Unicode",
+            "Unicode → TCVN3", "No conversion",
         ]
-
-        mode_labels = ["TCVN3 → Unicode", "VNI → Unicode", "Unicode → TCVN3", "No conversion"]
         self.log.append(f"📋 Layer: {layer.name()} — {total} features")
-        self.log.append(f"🔤 Text fields: {len(text_field_indices)}")
+        self.log.append(f"🔤 Text fields: {len(fields_list)} ({', '.join(fields_list[:5])})")
         self.log.append(f"🔄 Mode: {mode_labels[mode]}")
         self.log.append(f"💾 Format: {driver}")
         QApplication.processEvents()
 
-        # --- Step 1: Convert text in memory ---
+        # --- Step 1: Write using QgsVectorFileWriter (HCMGIS approach) ---
+        # Write feature by feature, converting text on the fly
+        writer = QgsVectorFileWriter(
+            path, "UTF-8",
+            layer.fields(), layer.wkbType(), layer.crs(),
+            driver
+        )
+
+        if writer.hasError() != QgsVectorFileWriter.NoError:
+            self.log.append(f"❌ Writer error: {writer.errorMessage()}")
+            QMessageBox.critical(self, "Error", writer.errorMessage())
+            del writer
+            return
+
         converted_count = 0
-        new_features = []
         for i, feat in enumerate(features):
             self.progress.setValue(i + 1)
-            new_feat = QgsFeature(fields)
-            new_feat.setGeometry(feat.geometry())
-            attrs = list(feat.attributes())
-            for fi in text_field_indices:
-                val = attrs[fi]
-                if isinstance(val, str) and val:
-                    if mode == 0:
-                        new_val = self._convert_tcvn3_to_unicode(val)
-                    elif mode == 1:
-                        new_val = self._convert_vni_to_unicode(val)
-                    elif mode == 2:
-                        new_val = self._convert_unicode_to_tcvn3(val)
-                    else:
-                        new_val = val
-                    if new_val != val:
-                        converted_count += 1
-                    attrs[fi] = new_val
-            new_feat.setAttributes(attrs)
-            new_features.append(new_feat)
+
+            # Convert text fields
+            if mode < 3:  # Not "no conversion"
+                for fn in fields_list:
+                    old_val = feat[fn]
+                    if old_val is not None and isinstance(old_val, str) and old_val:
+                        if mode == 0:
+                            new_val = self._convert_tcvn3_to_unicode(old_val)
+                        elif mode == 1:
+                            new_val = self._convert_vni_to_unicode(old_val)
+                        elif mode == 2:
+                            new_val = self._convert_unicode_to_tcvn3(old_val)
+                        else:
+                            new_val = old_val
+                        if new_val != old_val:
+                            converted_count += 1
+                            feat[fn] = new_val
+
+            writer.addFeature(feat)
+
+        del writer  # Close and flush
 
         self.log.append(f"🔤 Converted: {converted_count} values")
         self.progress.setValue(total + 2)
         QApplication.processEvents()
 
-        # --- Step 2: Create memory layer ---
-        geom_type = QgsWkbTypes.displayString(layer.wkbType())
-        mem_uri = f"{geom_type}?crs={layer.crs().authid()}"
-        mem = QgsVectorLayer(mem_uri, "converted", "memory")
-        prov = mem.dataProvider()
-        prov.addAttributes(fields.toList())
-        mem.updateFields()
-        prov.addFeatures(new_features)
-
-        self.progress.setValue(total + 5)
-        QApplication.processEvents()
-
-        # --- Step 3: Write to disk (always UTF-8) ---
-        self.log.append(f"💾 Writing → {os.path.basename(path)}")
-        options = QgsVectorFileWriter.SaveVectorOptions()
-        options.driverName = driver
-        options.fileEncoding = "UTF-8"
-
-        # Handle CRS transform
-        need_reproj = (layer.crs() != target_crs)
-        if need_reproj:
-            options.ct = QgsCoordinateTransform(
-                layer.crs(), target_crs, QgsProject.instance()
-            )
-            self.log.append(f"🌐 Reprojecting: {layer.crs().authid()} → {target_crs.authid()}")
-
-        ctx = QgsCoordinateTransformContext()
-        error = QgsVectorFileWriter.writeAsVectorFormatV3(
-            mem, path, ctx, options
-        )
-
-        self.progress.setValue(total + 8)
-        QApplication.processEvents()
-
-        if error[0] != QgsVectorFileWriter.NoError:
-            self.log.append(f"❌ Write error: {error}")
-            QMessageBox.critical(self, "Error", str(error))
-            return
-
-        # --- Step 4: Write .cpg file for SHP (tells MapInfo encoding) ---
+        # --- Step 2: Write .cpg file for SHP ---
         if driver == "ESRI Shapefile":
-            cpg_path = path.replace(".shp", ".cpg").replace(".SHP", ".cpg")
+            cpg_path = os.path.splitext(path)[0] + ".cpg"
             try:
                 with open(cpg_path, 'w') as f:
                     f.write("UTF-8")
@@ -340,17 +301,20 @@ class FontConverterDialog(QDialog):
             except Exception as e:
                 self.log.append(f"⚠️ Could not write .cpg: {e}")
 
-        # --- Step 5: Add result to project ---
-        result_layer = QgsVectorLayer(
-            path, os.path.basename(path).replace(ext, ''), "ogr"
-        )
-        if result_layer.isValid():
-            QgsProject.instance().addMapLayer(result_layer)
-            self.log.append(f"✅ Added to project: {result_layer.name()}")
+        # --- Step 3: Load result & set encoding ---
+        try:
+            result_layer = QgsVectorLayer(path, os.path.basename(path).replace(ext, ''), 'ogr')
+            result_layer.setProviderEncoding('System')
+            result_layer.dataProvider().setEncoding('UTF-8')
+            if result_layer.isValid():
+                QgsProject.instance().addMapLayer(result_layer)
+                self.log.append(f"✅ Added to project: {result_layer.name()}")
+        except Exception as e:
+            self.log.append(f"⚠️ Could not add layer: {e}")
 
-        self.progress.setValue(total + 10)
+        self.progress.setValue(total + 5)
 
-        crs_str = target_crs.authid() if need_reproj else layer.crs().authid()
+        crs_str = layer.crs().authid()
         self.log.append(
             f"\n✅ HOÀN THÀNH!\n"
             f"   File: {os.path.basename(path)}\n"
@@ -361,16 +325,11 @@ class FontConverterDialog(QDialog):
         )
 
         tip = ""
-        if driver == "ESRI Shapefile":
+        if mode == 2:
             tip = (
                 "\n💡 Mở trong MapInfo:\n"
-                "   File > Open > chọn SHP > Encoding: UTF-8\n"
-                "   Sau đó Table > Export > MapInfo TAB"
-            )
-        elif driver == "MapInfo File":
-            tip = (
-                "\n💡 File TAB đã ghi với charset UTF-8.\n"
-                "   MapInfo Pro sẽ đọc đúng tiếng Việt Unicode."
+                "   Font: .VnTime / .VnArial\n"
+                "   Encoding sẽ tự động nhận UTF-8"
             )
 
         QMessageBox.information(
@@ -378,28 +337,73 @@ class FontConverterDialog(QDialog):
             f"Exported {total} features → {os.path.basename(path)}\n"
             f"Format: {driver}\n"
             f"CRS: {crs_str}\n"
-            f"Font conversions: {converted_count}\n"
-            f"Encoding: UTF-8"
+            f"Font conversions: {converted_count}"
             + tip
         )
 
     # ═══════════════════════════════════════════════════════════════
-    # Conversion engines
+    # Conversion engines (HCMGIS-compatible index-based approach)
     # ═══════════════════════════════════════════════════════════════
     @staticmethod
     def _convert_tcvn3_to_unicode(text):
-        """Convert TCVN3 (ABC) encoded text to Unicode, char by char."""
-        return ''.join(_TCVN3_TO_UNICODE.get(ch, ch) for ch in text)
+        """TCVN3 → Unicode: replace each TCVN3 char with its Unicode equivalent."""
+        result = ''
+        for ch in text:
+            if ch in _TCVN2UNI:
+                result += _TCVN2UNI[ch]
+            else:
+                result += ch
+        return result
 
     @staticmethod
     def _convert_unicode_to_tcvn3(text):
-        """Convert Unicode Vietnamese to TCVN3 code points (.VnTime font)."""
-        return ''.join(_UNICODE_TO_TCVN3.get(ch, ch) for ch in text)
+        """Unicode → TCVN3: replace each Unicode Vietnamese char with TCVN3 equivalent."""
+        result = ''
+        for ch in text:
+            if ch in _UNI2TCVN:
+                result += _UNI2TCVN[ch]
+            else:
+                result += ch
+        return result
 
     @staticmethod
     def _convert_vni_to_unicode(text):
-        """Convert VNI encoded text to Unicode."""
-        result = text
-        for old, new in sorted(_VNI_TO_UNICODE.items(), key=lambda x: -len(x[0])):
-            result = result.replace(old, new)
-        return result
+        """VNI → Unicode: multi-char sequences first, then single-char."""
+        # 2-char sequences
+        _vni2 = [
+            ('aâ','â'),('AÂ','Â'),('aê','ă'),('AÊ','Ă'),('eâ','ê'),('EÂ','Ê'),
+            ('aù','á'),('AÙ','Á'),('aø','à'),('AØ','À'),('aû','ả'),('AÛ','Ả'),
+            ('aõ','ã'),('AÕ','Ã'),('aï','ạ'),('AÏ','Ạ'),
+            ('aá','ấ'),('AÁ','Ấ'),('aà','ầ'),('AÀ','Ầ'),('aå','ẩ'),('AÅ','Ẩ'),
+            ('aã','ẫ'),('AÃ','Ẫ'),('aä','ậ'),('AÄ','Ậ'),
+            ('aé','ắ'),('AÉ','Ắ'),('aè','ằ'),('AÈ','Ằ'),('aú','ẳ'),('AÚ','Ẳ'),
+            ('aü','ẵ'),('AÜ','Ẵ'),('aë','ặ'),('AË','Ặ'),
+            ('eù','é'),('EÙ','É'),('eø','è'),('EØ','È'),('eû','ẻ'),('EÛ','Ẻ'),
+            ('eõ','ẽ'),('EÕ','Ẽ'),('eï','ẹ'),('EÏ','Ẹ'),
+            ('eá','ế'),('EÁ','Ế'),('eà','ề'),('EÀ','Ề'),('eå','ể'),('EÅ','Ể'),
+            ('eã','ễ'),('EÃ','Ễ'),('eä','ệ'),('EÄ','Ệ'),
+            ('oû','ỏ'),('OÛ','Ỏ'),('oõ','õ'),('OÕ','Õ'),('oï','ọ'),('OÏ','Ọ'),
+            ('oá','ố'),('OÁ','Ố'),('oà','ồ'),('OÀ','Ồ'),('oå','ổ'),('OÅ','Ổ'),
+            ('oã','ỗ'),('OÃ','Ỗ'),('oä','ộ'),('OÄ','Ộ'),
+            ('ôù','ớ'),('ÔÙ','Ớ'),('ôø','ờ'),('ÔØ','Ờ'),('ôû','ở'),('ÔÛ','Ở'),
+            ('ôõ','ỡ'),('ÔÕ','Ỡ'),('ôï','ợ'),('ÔÏ','Ợ'),
+            ('uù','ú'),('UÙ','Ú'),('uø','ù'),('UØ','Ù'),('uû','ủ'),('UÛ','Ủ'),
+            ('uõ','ũ'),('UÕ','Ũ'),('uï','ụ'),('UÏ','Ụ'),
+            ('öù','ứ'),('ÖÙ','Ứ'),('öø','ừ'),('ÖØ','Ừ'),('öû','ử'),('ÖÛ','Ử'),
+            ('öõ','ữ'),('ÖÕ','Ữ'),('öï','ự'),('ÖÏ','Ự'),
+            ('yø','ỳ'),('YØ','Ỳ'),('yû','ỷ'),('YÛ','Ỷ'),
+            ('yõ','ỹ'),('YÕ','Ỹ'),('yù','ý'),('YÙ','Ý'),
+            ('où','ó'),('OÙ','Ó'),('oø','ò'),('OØ','Ò'),('oâ','ô'),('OÂ','Ô'),
+        ]
+        # 1-char sequences
+        _vni1 = [
+            ('ñ','đ'),('Ñ','Đ'),('í','í'),('Í','Í'),
+            ('ì','ì'),('Ì','Ì'),('æ','ỉ'),('Æ','Ỉ'),
+            ('ö','ư'),('Ö','Ư'),('î','ỵ'),('Î','Ỵ'),
+        ]
+        # Apply 2-char first
+        for old, new in _vni2:
+            text = text.replace(old, new)
+        for old, new in _vni1:
+            text = text.replace(old, new)
+        return text
