@@ -5,94 +5,72 @@ LVT Font Converter — Convert font encoding for a vector layer and export.
 Supports:
   - TCVN3 (ABC) → Unicode
   - VNI → Unicode
-  - Unicode → TCVN3 (for MapInfo compatibility)
-  - Export to SHP or MapInfo TAB
+  - No conversion (just re-export with format/CRS change)
+  - Export to SHP (with .cpg for MapInfo) or MapInfo TAB
 
 Author: Lộc Vũ Trung (LVT) / Slow Forest
 License: GPL-3.0
 """
 import os
-from qgis.PyQt.QtCore import Qt
+from qgis.PyQt.QtCore import Qt, QVariant
 from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QComboBox,
     QPushButton, QGroupBox, QFormLayout, QCheckBox,
     QMessageBox, QFileDialog, QTextEdit, QProgressBar,
+    QApplication,
 )
 from qgis.core import (
     QgsProject, QgsCoordinateReferenceSystem, QgsVectorLayer,
     QgsVectorFileWriter, QgsCoordinateTransformContext,
-    QgsField, QgsFeature,
+    QgsCoordinateTransform,
+    QgsField, QgsFeature, QgsFields, QgsWkbTypes,
 )
 from qgis.gui import QgsMapLayerComboBox
 
 from ..shared.i18n import current_language
 
 # ═══════════════════════════════════════════════════════════════
-# TCVN3 ↔ Unicode mapping (complete, byte-accurate)
+# TCVN3 → Unicode mapping (byte-level, comprehensive)
 # ═══════════════════════════════════════════════════════════════
-# TCVN3 uses Windows-1252 byte values to represent Vietnamese diacritics.
-# The mapping below uses the actual character representations.
-
 _TCVN3_TO_UNICODE = {
-    # Lowercase vowels with diacritics
-    # a with breve (ă)
+    # Lowercase - ă group
     '\xb0': 'ă', '\xb1': 'ắ', '\xb2': 'ằ', '\xb3': 'ẳ', '\xb4': 'ẵ', '\xb5': 'ặ',
-    # a with circumflex (â)
+    # â group
     '\xa9': 'â', '\xca': 'ấ', '\xa7': 'ầ', '\xa8': 'ẩ', '\xc9': 'ẫ', '\xcb': 'ậ',
-    # e with circumflex (ê)
+    # ê group
     '\xaa': 'ê', '\xd5': 'ế', '\xd2': 'ề', '\xd3': 'ể', '\xd4': 'ễ', '\xd6': 'ệ',
-    # o with circumflex (ô)
+    # ô group
     '\xab': 'ô', '\xe8': 'ố', '\xe5': 'ồ', '\xe6': 'ổ', '\xe7': 'ỗ', '\xe9': 'ộ',
-    # o with horn (ơ)
+    # ơ group
     '\xac': 'ơ', '\xed': 'ớ', '\xea': 'ờ', '\xeb': 'ở', '\xec': 'ỡ', '\xee': 'ợ',
-    # u with horn (ư)
+    # ư group
     '\xad': 'ư', '\xf8': 'ứ', '\xf5': 'ừ', '\xf6': 'ử', '\xf7': 'ữ', '\xf9': 'ự',
-    # d with stroke (đ)
+    # đ
     '\xae': 'đ',
-    # Tones on standalone vowels
-    # a
+    # Standalone tones: a e i o u y
     '\xe1': 'á', '\xe0': 'à', '\xe2': 'ả', '\xe3': 'ã', '\xe4': 'ạ',
-    # e
     '\xd0': 'é', '\xcf': 'è', '\xd1': 'ẻ', '\xce': 'ẽ', '\xd7': 'ẹ',
-    # i
     '\xdd': 'í', '\xd8': 'ì', '\xd9': 'ỉ', '\xdc': 'ĩ', '\xde': 'ị',
-    # o
     '\xf3': 'ó', '\xef': 'ò', '\xf0': 'ỏ', '\xf2': 'õ', '\xf4': 'ọ',
-    # u
     '\xfa': 'ú', '\xf1': 'ù', '\xfb': 'ủ', '\xfc': 'ũ', '\xfe': 'ụ',
-    # y
     '\xfd': 'ý', '\xdf': 'ỳ', '\xdb': 'ỷ', '\xda': 'ỹ', '\xff': 'ỵ',
-
-    # Uppercase vowels with diacritics
-    # A with breve (Ă)
+    # Uppercase
     '\x80': 'Ă', '\x81': 'Ắ', '\x82': 'Ằ', '\x83': 'Ẳ', '\x84': 'Ẵ', '\x85': 'Ặ',
-    # A with circumflex (Â)
     '\x86': 'Â', '\x87': 'Ấ', '\x88': 'Ầ', '\x89': 'Ẩ', '\x8a': 'Ẫ', '\x8b': 'Ậ',
-    # E with circumflex (Ê)
     '\x8c': 'Ê', '\x8d': 'Ế', '\x8e': 'Ề', '\x8f': 'Ể', '\x90': 'Ễ', '\x91': 'Ệ',
-    # O with circumflex (Ô)
     '\x92': 'Ô', '\x93': 'Ố', '\x94': 'Ồ', '\x95': 'Ổ', '\x96': 'Ỗ', '\x97': 'Ộ',
-    # O with horn (Ơ)
     '\x9e': 'Ơ', '\x9a': 'Ớ', '\x9b': 'Ờ', '\x9c': 'Ở', '\x9d': 'Ỡ', '\x9f': 'Ợ',
-    # U with horn (Ư)
     '\xa0': 'Ư', '\xa1': 'Ứ', '\xa2': 'Ừ', '\xa3': 'Ử', '\xa4': 'Ữ', '\xa5': 'Ự',
-    # D with stroke (Đ)
     '\xa6': 'Đ',
-    # Uppercase tones on standalone vowels
     '\xc1': 'Á', '\xc0': 'À', '\xc2': 'Ả', '\xc3': 'Ã', '\xc4': 'Ạ',
     '\xc5': 'É', '\xc6': 'È', '\xc7': 'Ẻ', '\xc8': 'Ẽ', '\x98': 'Ẹ',
-    '\xcc': 'Í', '\x99': 'Ì', '\xcd': 'Ỉ', '\xa6': 'Đ',
-    '\xd3': 'Ó', '\xd2': 'Ò', '\xd4': 'Ỏ', '\xd5': 'Õ', '\xd6': 'Ọ',
+    '\xcc': 'Í', '\x99': 'Ì', '\xcd': 'Ỉ',
 }
 
-# Build reverse map: Unicode → TCVN3
-_UNICODE_TO_TCVN3 = {v: k for k, v in _TCVN3_TO_UNICODE.items()}
-
 # ═══════════════════════════════════════════════════════════════
-# VNI → Unicode mapping (common characters)
+# VNI → Unicode mapping
 # ═══════════════════════════════════════════════════════════════
 _VNI_TO_UNICODE = {
-    # Multi-char sequences first (sorted by length desc during conversion)
     'aê': 'ă', 'AÊ': 'Ă',
     'aé': 'ắ', 'Aé': 'Ắ', 'aè': 'ằ', 'Aè': 'Ằ',
     'aú': 'ẳ', 'Aú': 'Ẳ', 'aû': 'ẵ', 'Aû': 'Ẵ', 'aë': 'ặ', 'Aë': 'Ặ',
@@ -107,16 +85,13 @@ _VNI_TO_UNICODE = {
     'oå': 'ổ', 'Oå': 'Ổ', 'oã': 'ỗ', 'Oã': 'Ỗ', 'oä': 'ộ', 'Oä': 'Ộ',
     'ôù': 'ớ', 'ôø': 'ờ', 'ôû': 'ở', 'ôõ': 'ỡ', 'ôï': 'ợ',
     'öù': 'ứ', 'öø': 'ừ', 'öû': 'ử', 'öõ': 'ữ', 'öï': 'ự',
-    'ô': 'ơ', 'Ô': 'Ơ',
-    'ö': 'ư', 'Ö': 'Ư',
+    'ô': 'ơ', 'Ô': 'Ơ', 'ö': 'ư', 'Ö': 'Ư',
     'ñ': 'đ', 'Ñ': 'Đ',
-    # Single-char tones
-    'aù': 'á', 'aø': 'à', 'aû': 'ả', 'aõ': 'ã', 'aï': 'ạ',
+    'aù': 'á', 'aø': 'à', 'aõ': 'ã', 'aï': 'ạ',
     'eù': 'é', 'eø': 'è', 'eû': 'ẻ', 'eõ': 'ẽ', 'eï': 'ẹ',
     'où': 'ó', 'oø': 'ò', 'oû': 'ỏ', 'oõ': 'õ', 'oï': 'ọ',
     'uù': 'ú', 'uø': 'ù', 'uû': 'ủ', 'uõ': 'ũ', 'uï': 'ụ',
     'yù': 'ý', 'yø': 'ỳ', 'yû': 'ỷ', 'yõ': 'ỹ',
-    'ó': 'í', 'ì': 'ì', 'æ': 'ỉ', 'ò': 'ị',
 }
 
 # CRS list (shared across modules)
@@ -141,7 +116,7 @@ class FontConverterDialog(QDialog):
         hdr = QLabel("<h3>🔤 Font Converter / Chuyển đổi Font chữ</h3>")
         ly.addWidget(hdr)
         ly.addWidget(QLabel(
-            "Chuyển font TCVN3/VNI ↔ Unicode, xuất Shapefile hoặc MapInfo TAB."
+            "Chuyển font TCVN3/VNI → Unicode, xuất Shapefile hoặc MapInfo TAB."
         ))
 
         form = QFormLayout()
@@ -155,7 +130,6 @@ class FontConverterDialog(QDialog):
         self.cmb_from.addItems([
             "TCVN3 (ABC) → Unicode",
             "VNI → Unicode",
-            "Unicode → TCVN3 (cho MapInfo)",
             "Không chuyển font / No conversion",
         ])
         form.addRow("Chuyển đổi / Convert:", self.cmb_from)
@@ -163,8 +137,8 @@ class FontConverterDialog(QDialog):
         # Output format
         self.cmb_format = QComboBox()
         self.cmb_format.addItems([
-            "📁 Shapefile (*.shp) — QGIS, ArcGIS",
-            "📁 MapInfo TAB (*.tab) — MapInfo Pro",
+            "📁 Shapefile (*.shp)",
+            "📁 MapInfo TAB (*.tab)",
         ])
         form.addRow("Định dạng / Format:", self.cmb_format)
 
@@ -187,7 +161,7 @@ class FontConverterDialog(QDialog):
         # Log
         self.log = QTextEdit()
         self.log.setReadOnly(True)
-        self.log.setMaximumHeight(140)
+        self.log.setMaximumHeight(160)
         self.log.setVisible(False)
         ly.addWidget(self.log)
 
@@ -211,13 +185,16 @@ class FontConverterDialog(QDialog):
     def refresh_layers(self):
         pass  # QgsMapLayerComboBox auto-refreshes
 
+    # ═══════════════════════════════════════════════════════════════
+    # Main export logic
+    # ═══════════════════════════════════════════════════════════════
     def _do_convert(self):
         layer = self.cmb_layer.currentLayer()
         if not layer:
             QMessageBox.warning(self, "LVT", "No layer selected.")
             return
 
-        # Get target CRS
+        # --- CRS ---
         idx = self.cmb_crs.currentIndex()
         crs_code = CRS_LIST[idx][1]
         if not crs_code:
@@ -226,13 +203,11 @@ class FontConverterDialog(QDialog):
         if not target_crs.isValid():
             target_crs = layer.crs()
 
-        # Get conversion mode
-        mode = self.cmb_from.currentIndex()  # 0=TCVN3→Uni, 1=VNI→Uni, 2=Uni→TCVN3, 3=none
+        # --- Mode ---
+        mode = self.cmb_from.currentIndex()  # 0=TCVN3→Uni, 1=VNI→Uni, 2=none
 
-        # Get output format
+        # --- Format ---
         fmt_idx = self.cmb_format.currentIndex()  # 0=SHP, 1=TAB
-
-        # Output path
         if fmt_idx == 1:
             filt = "MapInfo TAB (*.tab)"
             driver = "MapInfo File"
@@ -251,11 +226,24 @@ class FontConverterDialog(QDialog):
         self.progress.setVisible(True)
         self.log.setVisible(True)
         self.log.clear()
+        self.btn_convert.setEnabled(False)
+        QApplication.processEvents()
 
-        # Identify text fields
+        try:
+            self._export(layer, path, driver, ext, mode, target_crs)
+        except Exception as e:
+            self.log.append(f"❌ Exception: {e}")
+            QMessageBox.critical(self, "Error", str(e))
+        finally:
+            self.btn_convert.setEnabled(True)
+            self.progress.setVisible(False)
+
+    def _export(self, layer, path, driver, ext, mode, target_crs):
+        """Build a memory layer with converted text, then write to disk."""
         features = list(layer.getFeatures())
         total = len(features)
-        self.progress.setMaximum(total)
+        self.progress.setMaximum(total + 10)
+        self.progress.setValue(0)
 
         fields = layer.fields()
         text_field_indices = [
@@ -263,20 +251,20 @@ class FontConverterDialog(QDialog):
             if fields.field(i).typeName().lower() in ('string', 'text', 'varchar')
         ]
 
+        mode_labels = ["TCVN3 → Unicode", "VNI → Unicode", "No conversion"]
         self.log.append(f"📋 Layer: {layer.name()} — {total} features")
         self.log.append(f"🔤 Text fields: {len(text_field_indices)}")
-        mode_labels = [
-            "TCVN3 → Unicode", "VNI → Unicode",
-            "Unicode → TCVN3", "No conversion",
-        ]
         self.log.append(f"🔄 Mode: {mode_labels[mode]}")
+        self.log.append(f"💾 Format: {driver}")
+        QApplication.processEvents()
 
-        # Convert text in memory
+        # --- Step 1: Convert text in memory ---
         converted_count = 0
         new_features = []
         for i, feat in enumerate(features):
             self.progress.setValue(i + 1)
-            new_feat = QgsFeature(feat)
+            new_feat = QgsFeature(fields)
+            new_feat.setGeometry(feat.geometry())
             attrs = list(feat.attributes())
             for fi in text_field_indices:
                 val = attrs[fi]
@@ -285,8 +273,6 @@ class FontConverterDialog(QDialog):
                         new_val = self._convert_tcvn3_to_unicode(val)
                     elif mode == 1:
                         new_val = self._convert_vni_to_unicode(val)
-                    elif mode == 2:
-                        new_val = self._convert_unicode_to_tcvn3(val)
                     else:
                         new_val = val
                     if new_val != val:
@@ -295,121 +281,114 @@ class FontConverterDialog(QDialog):
             new_feat.setAttributes(attrs)
             new_features.append(new_feat)
 
-        # Write output file
-        self.log.append(f"💾 Writing {driver} → {os.path.basename(path)}")
+        self.log.append(f"🔤 Converted: {converted_count} values")
+        self.progress.setValue(total + 2)
+        QApplication.processEvents()
 
+        # --- Step 2: Create memory layer ---
+        geom_type = QgsWkbTypes.displayString(layer.wkbType())
+        mem_uri = f"{geom_type}?crs={layer.crs().authid()}"
+        mem = QgsVectorLayer(mem_uri, "converted", "memory")
+        prov = mem.dataProvider()
+        prov.addAttributes(fields.toList())
+        mem.updateFields()
+        prov.addFeatures(new_features)
+
+        self.progress.setValue(total + 5)
+        QApplication.processEvents()
+
+        # --- Step 3: Write to disk (always UTF-8) ---
+        self.log.append(f"💾 Writing → {os.path.basename(path)}")
         options = QgsVectorFileWriter.SaveVectorOptions()
         options.driverName = driver
-        if fmt_idx == 1 and mode == 2:
-            # MapInfo TAB + TCVN3: write as Windows-1252 for legacy compat
-            options.fileEncoding = "Windows-1252"
-        else:
-            options.fileEncoding = "UTF-8"
+        options.fileEncoding = "UTF-8"
+
+        # Handle CRS transform
+        need_reproj = (layer.crs() != target_crs)
+        if need_reproj:
+            options.ct = QgsCoordinateTransform(
+                layer.crs(), target_crs, QgsProject.instance()
+            )
+            self.log.append(f"🌐 Reprojecting: {layer.crs().authid()} → {target_crs.authid()}")
 
         ctx = QgsCoordinateTransformContext()
-
         error = QgsVectorFileWriter.writeAsVectorFormatV3(
-            layer, path, ctx, options
+            mem, path, ctx, options
         )
 
-        if error[0] == QgsVectorFileWriter.NoError:
-            # Overwrite text fields with converted values
-            if mode < 3 and converted_count > 0:
-                out_layer = QgsVectorLayer(path, "temp", "ogr")
-                if out_layer.isValid():
-                    out_layer.startEditing()
-                    out_feats = list(out_layer.getFeatures())
-                    for out_feat, new_feat in zip(out_feats, new_features):
-                        for fi in text_field_indices:
-                            if fi < len(new_feat.attributes()):
-                                out_layer.changeAttributeValue(
-                                    out_feat.id(), fi,
-                                    new_feat.attributes()[fi]
-                                )
-                    out_layer.commitChanges()
-                    del out_layer
+        self.progress.setValue(total + 8)
+        QApplication.processEvents()
 
-            # Set CRS on output if needed
-            if layer.crs() != target_crs:
-                self.log.append(f"🌐 Reprojecting to {target_crs.authid()}")
-                temp_layer = QgsVectorLayer(path, "temp_reproj", "ogr")
-                if temp_layer.isValid():
-                    reproj_path = path.replace(ext, f"_reproj{ext}")
-                    opts2 = QgsVectorFileWriter.SaveVectorOptions()
-                    opts2.driverName = driver
-                    opts2.fileEncoding = options.fileEncoding
-                    ctx2 = QgsCoordinateTransformContext()
-                    from qgis.core import QgsCoordinateTransform
-                    opts2.ct = QgsCoordinateTransform(
-                        temp_layer.crs(), target_crs,
-                        QgsProject.instance()
-                    )
-                    err2 = QgsVectorFileWriter.writeAsVectorFormatV3(
-                        temp_layer, reproj_path, ctx2, opts2
-                    )
-                    del temp_layer
-                    if err2[0] == QgsVectorFileWriter.NoError:
-                        # Replace original with reprojected
-                        import shutil
-                        base = os.path.splitext(path)[0]
-                        base2 = os.path.splitext(reproj_path)[0]
-                        for f in os.listdir(os.path.dirname(path)):
-                            fp = os.path.join(os.path.dirname(path), f)
-                            if os.path.splitext(fp)[0] == base2:
-                                target = base + os.path.splitext(fp)[1]
-                                shutil.move(fp, target)
-                        self.log.append("✅ Reprojection done")
-
-            # Add to project
-            result_layer = QgsVectorLayer(
-                path, os.path.basename(path).replace(ext, ''), "ogr"
-            )
-            if result_layer.isValid():
-                QgsProject.instance().addMapLayer(result_layer)
-
-            self.log.append(
-                f"✅ OK: {os.path.basename(path)}\n"
-                f"   CRS: {target_crs.authid()}\n"
-                f"   Features: {total}\n"
-                f"   Font conversions: {converted_count}"
-            )
-            QMessageBox.information(
-                self, "✅ Done",
-                f"Exported {total} features → {os.path.basename(path)}\n"
-                f"Format: {driver}\n"
-                f"CRS: {target_crs.authid()}\n"
-                f"Font conversions: {converted_count}"
-            )
-        else:
-            self.log.append(f"❌ Error: {error}")
+        if error[0] != QgsVectorFileWriter.NoError:
+            self.log.append(f"❌ Write error: {error}")
             QMessageBox.critical(self, "Error", str(error))
+            return
 
-        self.progress.setVisible(False)
+        # --- Step 4: Write .cpg file for SHP (tells MapInfo encoding) ---
+        if driver == "ESRI Shapefile":
+            cpg_path = path.replace(".shp", ".cpg").replace(".SHP", ".cpg")
+            try:
+                with open(cpg_path, 'w') as f:
+                    f.write("UTF-8")
+                self.log.append(f"📄 Created {os.path.basename(cpg_path)} (UTF-8)")
+            except Exception as e:
+                self.log.append(f"⚠️ Could not write .cpg: {e}")
+
+        # --- Step 5: Add result to project ---
+        result_layer = QgsVectorLayer(
+            path, os.path.basename(path).replace(ext, ''), "ogr"
+        )
+        if result_layer.isValid():
+            QgsProject.instance().addMapLayer(result_layer)
+            self.log.append(f"✅ Added to project: {result_layer.name()}")
+
+        self.progress.setValue(total + 10)
+
+        crs_str = target_crs.authid() if need_reproj else layer.crs().authid()
+        self.log.append(
+            f"\n✅ HOÀN THÀNH!\n"
+            f"   File: {os.path.basename(path)}\n"
+            f"   CRS: {crs_str}\n"
+            f"   Features: {total}\n"
+            f"   Font conversions: {converted_count}\n"
+            f"   Encoding: UTF-8"
+        )
+
+        tip = ""
+        if driver == "ESRI Shapefile":
+            tip = (
+                "\n💡 Mở trong MapInfo:\n"
+                "   File > Open > chọn SHP > Encoding: UTF-8\n"
+                "   Sau đó Table > Export > MapInfo TAB"
+            )
+        elif driver == "MapInfo File":
+            tip = (
+                "\n💡 File TAB đã ghi với charset UTF-8.\n"
+                "   MapInfo Pro sẽ đọc đúng tiếng Việt Unicode."
+            )
+
+        QMessageBox.information(
+            self, "✅ Done / Hoàn thành",
+            f"Exported {total} features → {os.path.basename(path)}\n"
+            f"Format: {driver}\n"
+            f"CRS: {crs_str}\n"
+            f"Font conversions: {converted_count}\n"
+            f"Encoding: UTF-8"
+            + tip
+        )
 
     # ═══════════════════════════════════════════════════════════════
     # Conversion engines
     # ═══════════════════════════════════════════════════════════════
     @staticmethod
     def _convert_tcvn3_to_unicode(text):
-        """Convert TCVN3 (ABC) encoded text to Unicode."""
-        result = []
-        for ch in text:
-            result.append(_TCVN3_TO_UNICODE.get(ch, ch))
-        return ''.join(result)
-
-    @staticmethod
-    def _convert_unicode_to_tcvn3(text):
-        """Convert Unicode text to TCVN3 encoding."""
-        result = []
-        for ch in text:
-            result.append(_UNICODE_TO_TCVN3.get(ch, ch))
-        return ''.join(result)
+        """Convert TCVN3 (ABC) encoded text to Unicode, char by char."""
+        return ''.join(_TCVN3_TO_UNICODE.get(ch, ch) for ch in text)
 
     @staticmethod
     def _convert_vni_to_unicode(text):
         """Convert VNI encoded text to Unicode."""
         result = text
-        # Sort by key length descending to match multi-char sequences first
         for old, new in sorted(_VNI_TO_UNICODE.items(), key=lambda x: -len(x[0])):
             result = result.replace(old, new)
         return result
