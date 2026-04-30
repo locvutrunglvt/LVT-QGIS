@@ -360,16 +360,18 @@ class TT16Dialog(QDialog):
                 QMessageBox.warning(self, "LVT4U", f"Load failed:\n{msg}")
             return
 
-        # Remap attribute if different from hint
-        attr_hint = style.get("attr_hint", "")
-        if field_name and attr_hint and field_name != attr_hint:
-            renderer = layer.renderer()
-            if renderer and hasattr(renderer, 'setClassAttribute'):
-                renderer.setClassAttribute(field_name)
-            elif renderer and renderer.type() == 'mergedFeatureRenderer':
-                emb = renderer.embeddedRenderer()
-                if emb and hasattr(emb, 'setClassAttribute'):
-                    emb.setClassAttribute(field_name)
+        # Remap attribute only on manual Apply (not auto-apply)
+        # Auto-apply loads QML as-is for exact fidelity
+        if not silent:
+            attr_hint = style.get("attr_hint", "")
+            if field_name and attr_hint and field_name != attr_hint:
+                renderer = layer.renderer()
+                if renderer and hasattr(renderer, 'setClassAttribute'):
+                    renderer.setClassAttribute(field_name)
+                elif renderer and renderer.type() == 'mergedFeatureRenderer':
+                    emb = renderer.embeddedRenderer()
+                    if emb and hasattr(emb, 'setClassAttribute'):
+                        emb.setClassAttribute(field_name)
 
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
