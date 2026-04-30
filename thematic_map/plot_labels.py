@@ -29,6 +29,8 @@ class PlotLabelsDialog(MBTilesDialog):
         # Hide MBTiles-specific sections
         self.grp_extent.setVisible(False)
         self.btn_export.setVisible(False)
+        # Hide polygon styling (stroke/fill) — pure labels only
+        self.grp_style.setVisible(False)
         # Retitle
         self._refresh_window_title()
 
