@@ -129,6 +129,12 @@ class LvtPlugin:
     def _build_menu(self):
         """Assemble the complete LVT menu structure."""
 
+        # --- Basemap (submenu with provider sub-groups) ---
+        basemap_sub = self._add_submenu("basemap.png", "Basemap")
+        self._build_basemap_menu(basemap_sub)
+
+        self.lvt_menu.addSeparator()
+
         # --- Map Layout ---
         self._add_action("layout.png", "Map Layout", self._open_layout)
 
@@ -167,12 +173,6 @@ class LvtPlugin:
         self._add_action(
             "thematic.png", "Plot Labels", self._open_thematic_labels, thematic_sub
         )
-
-        self.lvt_menu.addSeparator()
-
-        # --- Basemap (submenu with provider sub-groups) ---
-        basemap_sub = self._add_submenu("basemap.png", "Basemap")
-        self._build_basemap_menu(basemap_sub)
 
         self.lvt_menu.addSeparator()
 
