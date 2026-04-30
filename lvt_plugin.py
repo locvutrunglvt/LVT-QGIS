@@ -185,11 +185,8 @@ class LvtPlugin:
 
         self.lvt_menu.addSeparator()
 
-        # --- CRS Tools (submenu) ---
-        crs_sub = self._add_submenu("crs.png", "Coordinate System")
-        self._add_action("crs.png", "CRS Conversion", self._open_crs_convert, crs_sub)
-        self._add_action("crs.png", "Define CRS", self._open_crs_define, crs_sub)
-        self._add_action("crs.png", "CRS Catalog", self._open_crs_catalog, crs_sub)
+        # --- CRS Tools (single item — tabs inside dialog) ---
+        self._add_action("crs.png", "Coordinate System", self._open_crs_tools)
 
         self.lvt_menu.addSeparator()
 
@@ -430,32 +427,16 @@ class LvtPlugin:
         dlg.raise_()
         dlg.activateWindow()
 
-    def _ensure_crs_dialog(self):
-        """Lazy-create the CRS Tools dialog."""
+    def _open_crs_tools(self):
+        """Open the CRS Tools dialog."""
         if "crs" not in self._dialogs:
             from .crs_tools.dialog import CrsToolsDialog
             self._dialogs["crs"] = CrsToolsDialog(self.iface)
 
-    def _open_crs_convert(self):
-        """Open CRS Tools — Reproject tab."""
-        self._ensure_crs_dialog()
         dlg = self._dialogs["crs"]
-        dlg.tabs.setCurrentIndex(1)
-        dlg.show(); dlg.raise_(); dlg.activateWindow()
-
-    def _open_crs_define(self):
-        """Open CRS Tools — Set CRS tab."""
-        self._ensure_crs_dialog()
-        dlg = self._dialogs["crs"]
-        dlg.tabs.setCurrentIndex(0)
-        dlg.show(); dlg.raise_(); dlg.activateWindow()
-
-    def _open_crs_catalog(self):
-        """Open CRS Tools — VN-2000 Catalog tab."""
-        self._ensure_crs_dialog()
-        dlg = self._dialogs["crs"]
-        dlg.tabs.setCurrentIndex(2)
-        dlg.show(); dlg.raise_(); dlg.activateWindow()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
 
     def _open_about(self):
         """Open the About dialog."""

@@ -8,9 +8,9 @@ email=support@slowforest.org
 
 about=A comprehensive QGIS plugin suite providing map layout, KML conversion, MBTiles generation, EUDR GeoJSON export, thematic mapping, basemap loading, Vietnamese font conversion, VN-2000 CRS tools, and project packaging. Built from cartographic science and international standards.
 
-tracker=https://github.com/slowforest/lvt4u-plugin/issues
-repository=https://github.com/slowforest/lvt4u-plugin
-homepage=https://github.com/slowforest/lvt4u-plugin
+tracker=https://github.com/locvutrunglvt/LVT-QGIS/issues
+repository=https://github.com/locvutrunglvt/LVT-QGIS
+homepage=https://github.com/locvutrunglvt/LVT-QGIS
 
 tags=vietnam,forestry,layout,kml,eudr,geojson,mbtiles,crs,vn2000,basemap,font
 
