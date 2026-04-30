@@ -9,7 +9,7 @@ Supports:
   - No conversion (re-export with format/CRS change)
   - Export to SHP (with .cpg) or MapInfo TAB
 
-Mapping tables based on HCMGIS reference implementation.
+Mapping tables based on standard Vietnamese encoding specifications.
 
 Author: Lộc Vũ Trung (LVT) / Slow Forest
 License: GPL-3.0
@@ -33,7 +33,7 @@ from qgis.gui import QgsMapLayerComboBox
 from ..shared.i18n import current_language
 
 # ═══════════════════════════════════════════════════════════════
-# Parallel encoding lists (HCMGIS-compatible, proven mapping)
+# Parallel encoding lists (standard Vietnamese font mapping)
 # Index-matched: _UNICODE[i] ↔ _TCVN3[i]
 # ═══════════════════════════════════════════════════════════════
 _UNICODE = [
@@ -484,7 +484,7 @@ class FontConverterDialog(QDialog):
         self.log.append(f"✅ TAB file written: {os.path.basename(path)}")
 
     # ═══════════════════════════════════════════════════════════════
-    # Conversion engines (HCMGIS-compatible index-based approach)
+    # Conversion engines (index-based parallel list approach)
     # ═══════════════════════════════════════════════════════════════
     @staticmethod
     def _convert_tcvn3_to_unicode(text):
