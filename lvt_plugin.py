@@ -252,7 +252,7 @@ class LvtPlugin:
         ],
         "🇻🇳 Vietnam": [
             ("Vietbando Maps",
-             "https://images.vietbando.com/ImageLoader/GetImage.ashx?Ver%3D2016%26LayerIds%3DVBD%26Y%3D{y}%26X%3D{x}%26Level%3D{z}", 0, 22),
+             "https://images.vietbando.com/ImageLoader/GetImage.ashx?Ver=2016&LayerIds=VBD&Y={y}&X={x}&Level={z}", 0, 22),
             ("BecaGIS Maps",
              "https://maps.becagis.vn/tiles/basemap/light/{z}/{x}/{y}.png", 0, 22),
             ("F4 Map 2D",
@@ -433,9 +433,14 @@ class LvtPlugin:
             zmax: Maximum zoom level (default 19).
         """
         from qgis.core import QgsRasterLayer, QgsProject
+        from urllib.parse import quote as _url_quote
+
+        # URL-encode the tile URL so that '&' inside it won't clash
+        # with the '&' separating QGIS URI parameters.
+        encoded_url = _url_quote(url, safe=':/{}.?%')
 
         uri = (
-            f"type=xyz&url={url}"
+            f"type=xyz&url={encoded_url}"
             f"&zmin={zmin}&zmax={zmax}"
         )
 
