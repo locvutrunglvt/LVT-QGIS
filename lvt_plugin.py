@@ -420,19 +420,42 @@ class LvtPlugin:
 
     def _open_font(self):
         """Open the Font Converter dialog."""
-        self._show_placeholder("Font Converter")
+        if "font" not in self._dialogs:
+            from .font_converter.dialog import FontConverterDialog
+            self._dialogs["font"] = FontConverterDialog(self.iface)
+
+        dlg = self._dialogs["font"]
+        dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def _ensure_crs_dialog(self):
+        """Lazy-create the CRS Tools dialog."""
+        if "crs" not in self._dialogs:
+            from .crs_tools.dialog import CrsToolsDialog
+            self._dialogs["crs"] = CrsToolsDialog(self.iface)
 
     def _open_crs_convert(self):
-        """Open the CRS Conversion dialog."""
-        self._show_placeholder("CRS Conversion")
+        """Open CRS Tools — Reproject tab."""
+        self._ensure_crs_dialog()
+        dlg = self._dialogs["crs"]
+        dlg.tabs.setCurrentIndex(1)
+        dlg.show(); dlg.raise_(); dlg.activateWindow()
 
     def _open_crs_define(self):
-        """Open the CRS Definition dialog."""
-        self._show_placeholder("Define CRS")
+        """Open CRS Tools — Set CRS tab."""
+        self._ensure_crs_dialog()
+        dlg = self._dialogs["crs"]
+        dlg.tabs.setCurrentIndex(0)
+        dlg.show(); dlg.raise_(); dlg.activateWindow()
 
     def _open_crs_catalog(self):
-        """Open the CRS Catalog dialog."""
-        self._show_placeholder("CRS Catalog")
+        """Open CRS Tools — VN-2000 Catalog tab."""
+        self._ensure_crs_dialog()
+        dlg = self._dialogs["crs"]
+        dlg.tabs.setCurrentIndex(2)
+        dlg.show(); dlg.raise_(); dlg.activateWindow()
 
     def _open_about(self):
         """Open the About dialog."""

@@ -81,8 +81,8 @@ class AboutDialog(QDialog):
         <div style='text-align:left;display:inline-block;width:80%;
         font-size:13px;line-height:1.8;margin-top:10px'>
         <b>📱 Zalo:</b> 0913 191 178<br>
-        <b>🌐 Website:</b> locvutrung.lvtcenter.it.com<br>
-        <b>🎬 YouTube:</b> youtube.com/@locvutrung<br>
+        <b>🌐 Website:</b> <a href='http://locvutrung.lvtcenter.it.com' style='color:#1565C0'>locvutrung.lvtcenter.it.com</a><br>
+        <b>🎬 YouTube:</b> <a href='https://www.youtube.com/@locvutrung' style='color:#c62828'>youtube.com/@locvutrung</a><br>
         </div>
         <div style='margin-top:15px;background:#fff;padding:12px;
         border-radius:5px;border-left:5px solid #1B5E20;text-align:left;
