@@ -249,9 +249,13 @@ class FontConverterDialog(QDialog):
         QApplication.processEvents()
 
         # --- Step 1: Write using QgsVectorFileWriter (HCMGIS approach) ---
-        # Write feature by feature, converting text on the fly
+        # TAB files: use Windows-1252 so MapInfo reads TCVN3 chars as single bytes
+        # SHP files: use UTF-8 + .cpg
+        file_encoding = "Windows-1252" if driver == "MapInfo File" else "UTF-8"
+        self.log.append(f"📝 File encoding: {file_encoding}")
+
         writer = QgsVectorFileWriter(
-            path, "UTF-8",
+            path, file_encoding,
             layer.fields(), layer.wkbType(), layer.crs(),
             driver
         )
@@ -305,7 +309,7 @@ class FontConverterDialog(QDialog):
         try:
             result_layer = QgsVectorLayer(path, os.path.basename(path).replace(ext, ''), 'ogr')
             result_layer.setProviderEncoding('System')
-            result_layer.dataProvider().setEncoding('UTF-8')
+            result_layer.dataProvider().setEncoding(file_encoding)
             if result_layer.isValid():
                 QgsProject.instance().addMapLayer(result_layer)
                 self.log.append(f"✅ Added to project: {result_layer.name()}")
