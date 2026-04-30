@@ -53,6 +53,7 @@ _TRANSLATIONS = {
     "Excel → GIS": "Chuyển Excel vào bản đồ",
     "Thematic Map": "Bản đồ chuyên đề",
     "Forest Status Thematic Map": "Bản đồ chuyên đề hiện trạng rừng",
+    "Create Thematic Map": "Tạo bản đồ chuyên đề",
     "Create Plot Labels": "Tạo nhãn lô",
     "Apply Style": "Áp dụng kiểu",
     "Apply": "Áp dụng",

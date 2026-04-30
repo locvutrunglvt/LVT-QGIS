@@ -170,7 +170,7 @@ class LvtPlugin:
         # --- Thematic Map (submenu) ---
         thematic_sub = self._add_submenu("thematic.png", "Forest Status Thematic Map")
         self._add_action(
-            "thematic.png", "Circular 16/2023", self._open_thematic_tt16, thematic_sub
+            "thematic.png", "Create Thematic Map", self._open_thematic_tt16, thematic_sub
         )
         thematic_sub.addSeparator()
         self._add_action(
