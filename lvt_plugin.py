@@ -249,9 +249,7 @@ class LvtPlugin:
             ("Bing VirtualEarth",
              "https://ecn.t3.tiles.virtualearth.net/tiles/a{q}.jpeg?g=1", 0, 22),
         ],
-        "🇻🇳 Vietnam": [
-            ("BecaGIS Maps",
-             "https://maps.becagis.vn/tiles/basemap/light/{z}/{x}/{y}.png", 0, 22),
+        "🔷 Other": [
             ("F4 Map 2D",
              "https://tile1.f4map.com/tiles/f4_2d/{z}/{x}/{y}.png", 0, 22),
         ],
