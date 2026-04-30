@@ -21,6 +21,7 @@ from qgis.PyQt.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QGroupBox, QTableWidget, QTableWidgetItem,
     QHeaderView, QMessageBox, QAbstractItemView, QFrame,
+    QTabWidget, QWidget,
 )
 from qgis.core import QgsVectorLayer, QgsWkbTypes
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
@@ -113,6 +114,33 @@ class TT16Dialog(QDialog):
         hdr.setStyleSheet("color:#1565c0; padding:2px 0;")
         root.addWidget(hdr)
 
+        # Tabs
+        self.tabs = QTabWidget()
+        root.addWidget(self.tabs, 1)
+
+        # --- Tab 1: Apply Style ---
+        tab_apply = QWidget()
+        self.tabs.addTab(tab_apply, "🎨 " + tr("Apply Style"))
+        self._build_apply_tab(tab_apply)
+
+        # --- Tab 2: LDLR Reference ---
+        tab_ref = QWidget()
+        self.tabs.addTab(tab_ref, "📋 LDLR_Ref")
+        self._build_ref_tab(tab_ref)
+
+        # --- Tab 3: Plot Labels ---
+        tab_labels = QWidget()
+        self.tabs.addTab(tab_labels, "🏷️ " + tr("Plot Labels"))
+        self._build_labels_tab(tab_labels)
+
+        # Init
+        self._on_layer_changed(self.cmb_layer.currentLayer())
+        self._on_style_changed(self.cmb_style.currentIndex())
+
+    def _build_apply_tab(self, parent):
+        ly = QVBoxLayout(parent)
+        ly.setSpacing(8)
+
         # Top row: Layer | Style | Field
         top = QHBoxLayout()
         top.setSpacing(10)
@@ -157,7 +185,7 @@ class TT16Dialog(QDialog):
         gf.addWidget(self.lbl_field_info)
         top.addWidget(grp_field, 2)
 
-        root.addLayout(top)
+        ly.addLayout(top)
 
         # Buttons
         btn_row = QHBoxLayout()
@@ -179,19 +207,17 @@ class TT16Dialog(QDialog):
         btn_close.clicked.connect(self.close)
         btn_row.addWidget(btn_close)
         btn_row.addStretch()
-        root.addLayout(btn_row)
+        ly.addLayout(btn_row)
 
-        # Separator
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setStyleSheet("color:#ddd;")
-        root.addWidget(line)
+        ly.addStretch()
 
-        # Reference table
+    def _build_ref_tab(self, parent):
+        ly = QVBoxLayout(parent)
+
         self.lbl_table = QLabel("")
         self.lbl_table.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.lbl_table.setStyleSheet("padding:2px 0;")
-        root.addWidget(self.lbl_table)
+        ly.addWidget(self.lbl_table)
 
         self.tbl = QTableWidget()
         self.tbl.setColumnCount(4)
@@ -206,11 +232,20 @@ class TT16Dialog(QDialog):
         self.tbl.setColumnWidth(1, 32)
         self.tbl.setColumnWidth(3, 72)
         hh.setSectionResizeMode(2, QHeaderView.Stretch)
-        root.addWidget(self.tbl, 1)
+        ly.addWidget(self.tbl, 1)
 
-        # Init
-        self._on_layer_changed(self.cmb_layer.currentLayer())
-        self._on_style_changed(self.cmb_style.currentIndex())
+    def _build_labels_tab(self, parent):
+        """Embed the Plot Labels dialog content inside this tab."""
+        ly = QVBoxLayout(parent)
+
+        try:
+            from .plot_labels import PlotLabelsDialog
+            self._label_dlg = PlotLabelsDialog(self.iface, parent)
+            # Remove window frame — embed as widget
+            self._label_dlg.setWindowFlags(Qt.Widget)
+            ly.addWidget(self._label_dlg)
+        except Exception as e:
+            ly.addWidget(QLabel(f"Plot Labels not available: {e}"))
 
     # -----------------------------------------------------------------
     # Colour table — adapts to style type AND language
