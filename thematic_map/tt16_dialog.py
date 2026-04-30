@@ -379,11 +379,10 @@ class TT16Dialog(QDialog):
             )
             return
 
-        # importNamedStyle returns (str, str): (result, errorMsg)
-        # errorMsg is EMPTY on success, non-empty on failure
-        _result, err_msg = layer.importNamedStyle(doc)
-        _log(f"importNamedStyle: result='{_result[:40]}', err='{err_msg[:40]}'")
-        if err_msg:
+        # importNamedStyle returns (bool, str): (success, errorMsg)
+        ok, err_msg = layer.importNamedStyle(doc)
+        _log(f"importNamedStyle: ok={ok}, err='{err_msg}'")
+        if not ok:
             QMessageBox.warning(self, "LVT4U", f"Import failed:\n{err_msg}")
             return
 
