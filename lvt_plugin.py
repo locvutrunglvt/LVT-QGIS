@@ -163,6 +163,7 @@ class LvtPlugin:
         # --- Data Tools ---
         self._add_action("mbtiles.png", "Create MBTiles", self._open_mbtiles)
         self._add_action("package.png", "Package Map", self._open_packager)
+        self._add_action("excel.png", "Excel → GIS", self._open_excel_gis)
 
         self.lvt_menu.addSeparator()
 
@@ -394,6 +395,17 @@ class LvtPlugin:
 
         dlg = self._dialogs["plot_labels"]
         dlg.refresh_layers()
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+    def _open_excel_gis(self):
+        """Open the Excel → GIS importer dialog."""
+        if "excel_gis" not in self._dialogs:
+            from .excel_gis.dialog import ExcelGisDialog
+            self._dialogs["excel_gis"] = ExcelGisDialog(self.iface)
+
+        dlg = self._dialogs["excel_gis"]
         dlg.show()
         dlg.raise_()
         dlg.activateWindow()

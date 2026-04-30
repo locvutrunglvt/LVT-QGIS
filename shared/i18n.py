@@ -50,6 +50,7 @@ _TRANSLATIONS = {
     "About": "Thông tin",
     "Circular 33": "Theo TT 33",
     "Style Library": "Thư viện định dạng",
+    "Excel → GIS": "Chuyển Excel vào bản đồ",
 
     # --- Messages ---
     "{module} — Coming soon!": "{module} — Sắp ra mắt!",
