@@ -30,6 +30,7 @@ from qgis.core import (
     QgsField, QgsFeature, QgsFields, QgsWkbTypes,
 )
 from qgis.gui import QgsMapLayerComboBox
+from ..shared.i18n import tr
 
 from ..shared.i18n import current_language
 
@@ -96,7 +97,7 @@ class FontConverterDialog(QDialog):
     def __init__(self, iface, parent=None):
         super().__init__(parent or iface.mainWindow())
         self.iface = iface
-        self.setWindowTitle("LVT — Font Converter / Chuyển đổi Font")
+        self.setWindowTitle(f"LVT — {tr('Font Converter')}")
         self.setMinimumSize(580, 460)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
         self._build_ui()
@@ -105,10 +106,10 @@ class FontConverterDialog(QDialog):
         ly = QVBoxLayout(self)
 
         # Header
-        hdr = QLabel("<h3>🔤 Font Converter / Chuyển đổi Font chữ</h3>")
+        hdr = QLabel(f"<h3>🔤 {tr('Font Converter')}</h3>")
         ly.addWidget(hdr)
         ly.addWidget(QLabel(
-            "Chuyển font TCVN3/VNI ↔ Unicode, xuất Shapefile hoặc MapInfo TAB."
+            tr('Convert font TCVN3/VNI ↔ Unicode, export Shapefile or MapInfo TAB.')
         ))
 
         form = QFormLayout()
@@ -123,9 +124,9 @@ class FontConverterDialog(QDialog):
             "TCVN3 (ABC) → Unicode",
             "VNI → Unicode",
             "Unicode → TCVN3 (.VnTime)",
-            "Không chuyển font / No conversion",
+            tr('No conversion'),
         ])
-        form.addRow("Chuyển đổi / Convert:", self.cmb_from)
+        form.addRow(tr('Conversion:'), self.cmb_from)
 
         # Output format
         self.cmb_format = QComboBox()
@@ -133,7 +134,7 @@ class FontConverterDialog(QDialog):
             "📁 Shapefile (*.shp)",
             "📁 MapInfo TAB (*.tab)",
         ])
-        form.addRow("Định dạng / Format:", self.cmb_format)
+        form.addRow(tr('Format:'), self.cmb_format)
 
         # Target CRS
         self.cmb_crs = QComboBox()
@@ -142,7 +143,7 @@ class FontConverterDialog(QDialog):
         for i, (_, code) in enumerate(CRS_LIST):
             if not code:
                 self.cmb_crs.model().item(i).setEnabled(False)
-        form.addRow("CRS xuất / Export CRS:", self.cmb_crs)
+        form.addRow(tr('Export CRS:'), self.cmb_crs)
 
         ly.addLayout(form)
 
@@ -160,7 +161,7 @@ class FontConverterDialog(QDialog):
 
         # Buttons
         btn_row = QHBoxLayout()
-        self.btn_convert = QPushButton("🔄 Convert & Export / Chuyển đổi & Xuất")
+        self.btn_convert = QPushButton(f"🔄 {tr('Convert & Export')}")
         self.btn_convert.setStyleSheet(
             "QPushButton{background:#2e7d32;color:#fff;font-weight:bold;"
             "padding:8px 20px;border-radius:4px}"
@@ -169,7 +170,7 @@ class FontConverterDialog(QDialog):
         self.btn_convert.clicked.connect(self._do_convert)
         btn_row.addWidget(self.btn_convert)
 
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr('Close'))
         btn_close.clicked.connect(self.close)
         btn_row.addWidget(btn_close)
         ly.addLayout(btn_row)

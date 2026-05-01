@@ -17,6 +17,7 @@ from qgis.core import QgsProject, QgsMapLayerProxyModel, QgsVectorLayer
 from qgis.gui import QgsMapLayerComboBox
 
 from .engine import LvtEngine
+from ..shared.i18n import tr
 
 
 # Paper sizes in mm (width x height for landscape)
@@ -107,7 +108,7 @@ class LvtDialog(QDialog):
         )
         btn_help.clicked.connect(self._show_help)
 
-        self.btn_create = QPushButton("Create Layout / Tạo khung")
+        self.btn_create = QPushButton(f"🗺️ {tr('Create Layout')}")
         self.btn_create.setStyleSheet(
             "QPushButton{background:#2e7d32;color:#fff;font-weight:bold;"
             "padding:6px 20px;border-radius:4px}"
@@ -115,7 +116,7 @@ class LvtDialog(QDialog):
         )
         self.btn_create.clicked.connect(self._on_create)
 
-        btn_close = QPushButton("Close")
+        btn_close = QPushButton(tr('Close'))
         btn_close.clicked.connect(self.close)
 
         btn_row.addWidget(btn_help)
@@ -142,7 +143,7 @@ class LvtDialog(QDialog):
         row = 0
 
         # Layout mode selector
-        g.addWidget(QLabel("Layout Mode / Chế độ:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Layout Mode')}:"), row, 0)
         mode_box = QHBoxLayout()
         self.rad_slide = QRadioButton("Slide (simple)")
         self.rad_print = QRadioButton("Print (full frame)")
@@ -157,7 +158,7 @@ class LvtDialog(QDialog):
         row += 1
 
         # Language selector
-        g.addWidget(QLabel("Language / Ngôn ngữ:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Language')}:"), row, 0)
         self.cmb_lang = QComboBox()
         self.cmb_lang.addItems(["English (EN)", "Tiếng Việt (VN)"])
         self.cmb_lang.setCurrentIndex(1)  # VN default
@@ -165,21 +166,21 @@ class LvtDialog(QDialog):
         row += 1
 
         # ── Print-only fields ─────────────────────────────────────
-        self.lbl_title = QLabel("Map Title / Tên bản đồ:")
+        self.lbl_title = QLabel(f"{tr('Map Title')}:")
         g.addWidget(self.lbl_title, row, 0)
         self.txt_title = QLineEdit()
         self.txt_title.setPlaceholderText("e.g. Land Use Map 2026")
         g.addWidget(self.txt_title, row, 1)
         row += 1
 
-        self.lbl_org = QLabel("Organization / Đơn vị:")
+        self.lbl_org = QLabel(f"{tr('Organization')}:")
         g.addWidget(self.lbl_org, row, 0)
         self.txt_org = QLineEdit()
         self.txt_org.setPlaceholderText("e.g. Tan Cao Nguyên JSC")
         g.addWidget(self.txt_org, row, 1)
         row += 1
 
-        self.lbl_study = QLabel("Study Area / Khu vực:")
+        self.lbl_study = QLabel(f"{tr('Study Area')}:")
         g.addWidget(self.lbl_study, row, 0)
         self.txt_study = QLineEdit()
         self.txt_study.setPlaceholderText("e.g. Gia Lai Province")
@@ -198,13 +199,13 @@ class LvtDialog(QDialog):
             wgt.setVisible(False)  # hidden by default (Slide mode)
 
         # ── Common fields ─────────────────────────────────────────
-        g.addWidget(QLabel("Author / Người lập:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Author')}:"), row, 0)
         self.txt_author = QLineEdit()
         self.txt_author.setPlaceholderText("e.g. Tác giả bản đồ / Author of Map")
         g.addWidget(self.txt_author, row, 1)
         row += 1
 
-        g.addWidget(QLabel("Date / Ngày:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Date')}:"), row, 0)
         self.txt_date = QLineEdit(date.today().strftime("%d/%m/%Y"))
         g.addWidget(self.txt_date, row, 1)
         row += 1
@@ -285,7 +286,7 @@ class LvtDialog(QDialog):
         g = QGridLayout(w)
         row = 0
 
-        g.addWidget(QLabel("Paper Size / Khổ giấy:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Paper Size')}:"), row, 0)
         self.cmb_paper = QComboBox()
         self.cmb_paper.addItems(list(PAPER_SIZES.keys()) + ["Custom / Tự chọn"])
         self.cmb_paper.setCurrentIndex(1)  # A4 default
@@ -293,7 +294,7 @@ class LvtDialog(QDialog):
         g.addWidget(self.cmb_paper, row, 1)
         row += 1
 
-        g.addWidget(QLabel("Custom Size (mm) / Kích thước tự chọn:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Custom Size')} (mm):"), row, 0)
         custom_box = QHBoxLayout()
         self.spn_custom_w = QSpinBox()
         self.spn_custom_w.setRange(50, 3000)
@@ -334,7 +335,7 @@ class LvtDialog(QDialog):
         row += 1
 
         # Orientation (hidden when Custom + Draw is used)
-        self.lbl_orient = QLabel("Orientation / Hướng:")
+        self.lbl_orient = QLabel(f"{tr('Orientation')}:")
         g.addWidget(self.lbl_orient, row, 0)
         orient_box = QHBoxLayout()
         self.rad_landscape = QRadioButton("Landscape / Ngang")
@@ -351,7 +352,7 @@ class LvtDialog(QDialog):
         row += 1
 
         # Scale
-        g.addWidget(QLabel("Scale / Tỷ lệ:"), row, 0)
+        g.addWidget(QLabel(f"{tr('Scale')}:"), row, 0)
         scale_box = QHBoxLayout()
         self.chk_auto_scale = QCheckBox("Auto fit / Tự động")
         self.chk_auto_scale.setChecked(True)
@@ -386,7 +387,7 @@ class LvtDialog(QDialog):
         g = QGridLayout(w)
         row = 0
 
-        g.addWidget(QLabel("Nguồn dữ liệu xây dựng bản đồ:"), row, 0, 1, 2)
+        g.addWidget(QLabel(f"{tr('Data Sources')}:"), row, 0, 1, 2)
         row += 1
         self.txt_sources = QTextEdit()
         self.txt_sources.setPlaceholderText(

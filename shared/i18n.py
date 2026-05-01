@@ -77,6 +77,13 @@ _TRANSLATIONS = {
     "Vietnamese": "Tiếng Việt",
     "Close": "Đóng",
     "Settings saved. Restart QGIS to apply.": "Đã lưu. Khởi động lại QGIS để áp dụng.",
+    "Expertise": "Phạm vi chuyên môn",
+    "FSC, Silviculture & Digital Transformation Expert": "Chuyên gia FSC, Kỹ thuật lâm sinh, và Chuyển đổi số",
+    "FSC/CoC Forest Certification": "Hệ thống chứng chỉ rừng FSC/CoC",
+    "EU Deforestation Regulation (EUDR)": "Quy định chống phá rừng châu Âu (EUDR)",
+    "Webapp / Appsheet Applications": "Ứng dụng Webapp / Appsheet",
+    "QGIS GIS / Data Management": "Hệ thống thông tin địa lý QGIS / Quản lý DATA",
+    "Silviculture": "Kỹ thuật Lâm sinh",
 
     # --- Common ---
     "OK": "OK",
@@ -91,6 +98,30 @@ _TRANSLATIONS = {
     "Warning": "Cảnh báo",
     "Success": "Thành công",
     "Processing...": "Đang xử lý...",
+
+    # --- Font Converter ---
+    "Font Converter": "Chuyển đổi font chữ",
+    "Convert font TCVN3/VNI ↔ Unicode, export Shapefile or MapInfo TAB.": "Chuyển font TCVN3/VNI ↔ Unicode, xuất Shapefile hoặc MapInfo TAB.",
+    "Conversion:": "Chuyển đổi:",
+    "No conversion": "Không chuyển font",
+    "Format:": "Định dạng:",
+    "Export CRS:": "CRS xuất:",
+    "Convert & Export": "Chuyển đổi & Xuất",
+    "Guide": "Hướng dẫn",
+
+    # --- Layout ---
+    "Create Layout": "Tạo khung",
+    "Map Layout": "Xây dựng Layout bản đồ",
+    "Layout Mode": "Chế độ Layout",
+    "Map Title": "Tên bản đồ",
+    "Organization": "Đơn vị",
+    "Study Area": "Khu vực",
+    "Date": "Ngày",
+    "Paper Size": "Khổ giấy",
+    "Custom Size": "Kích thước tự chọn",
+    "Orientation": "Hướng",
+    "Scale": "Tỷ lệ",
+    "Data Sources": "Nguồn dữ liệu xây dựng bản đồ",
 }
 
 
