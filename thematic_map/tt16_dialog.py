@@ -762,22 +762,20 @@ class TT16Dialog(QDialog):
                 QgsWkbTypes.PolygonGeometry: "🔷 Polygon",
             }
             self.lbl_geom.setText(labels.get(geom, "?"))
+            self._auto_detect_field()
+
+            # Sync embedded label dialog (vector layers only)
+            if hasattr(self, '_label_dlg') and self._label_dlg is not None:
+                try:
+                    self._label_dlg.refresh_layers()
+                    for i in range(self._label_dlg.cbo_layer.count()):
+                        if self._label_dlg.cbo_layer.itemData(i) == layer.id():
+                            self._label_dlg.cbo_layer.setCurrentIndex(i)
+                            break
+                except Exception:
+                    pass
         else:
             self.lbl_geom.setText("—")
-        self._auto_detect_field()
-
-        # Sync embedded label dialog so its field checkboxes
-        # always reflect the currently selected thematic layer
-        if hasattr(self, '_label_dlg') and self._label_dlg is not None and layer:
-            # Populate layer list and select matching layer for field sync
-            try:
-                self._label_dlg.refresh_layers()
-                for i in range(self._label_dlg.cbo_layer.count()):
-                    if self._label_dlg.cbo_layer.itemData(i) == layer.id():
-                        self._label_dlg.cbo_layer.setCurrentIndex(i)
-                        break
-            except Exception:
-                pass  # Non-critical — fields may not update
 
     def _on_style_changed(self, index):
         if index < 0:
