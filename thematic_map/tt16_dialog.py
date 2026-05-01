@@ -802,7 +802,7 @@ class TT16Dialog(QDialog):
     def _auto_detect_field(self):
         style = self.cmb_style.currentData()
         layer = self.cmb_layer.currentLayer()
-        if not style or not layer:
+        if not style or not layer or not isinstance(layer, QgsVectorLayer):
             self.lbl_field_info.setText("")
             return
 
